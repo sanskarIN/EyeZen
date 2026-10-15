@@ -396,7 +396,7 @@ export default function App() {
               onChange={enabled => changeProfile(selected.id, p => ({ ...p, breaks: { ...p.breaks, enabled } }))}/>
             <div className="button-row">
               <button className="primary-btn" onClick={() => applyProfile(selected.id)}><Check size={16}/> Apply profile</button>
-              <button className="secondary-btn" onClick={() => exportJson(selected, "eyezen-profile.json")}><Download size={16}/> Export</button>
+              <button className="secondary-btn" onClick={() => exportJson({ schemaVersion: 1, kind: "eyezen-profile", profile: selected }, "eyezen-profile.json")}><Download size={16}/> Export</button>
               <button className="danger-btn" onClick={() => deleteProfile(selected.id)}><Trash2 size={16}/> Delete</button>
             </div>
             {selected.id === data.activeProfileId && <SectionDescription>To apply changes to an active profile, select “Apply profile” again.</SectionDescription>}
