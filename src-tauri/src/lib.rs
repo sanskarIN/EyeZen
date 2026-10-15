@@ -103,7 +103,7 @@ pub fn run() {
             if window.label() == "main"
                 && matches!(event, tauri::WindowEvent::CloseRequested { .. })
             {
-                overlay::disable(&window.app_handle());
+                overlay::disable(window.app_handle());
             }
         })
         .invoke_handler(tauri::generate_handler![
