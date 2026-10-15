@@ -93,3 +93,36 @@ Import/export currently uses frontend JSON file input/download and backend valid
 ## Release policy
 
 **No claim of a stable v1.0.0 release or finished physical display integration has been made.** CI status is inspectable in the repository. Stable tagging requires successful tests and hardware/OS acceptance according to docs/release-checklist.md.
+
+## Final v1.0.0 release engineering (2026-10-15)
+
+### Root cause of failed platform packaging checks
+
+All frontend checks, Rust formatting, Clippy, Rust tests, and application release compilation were green in the last completed three-platform CI attempt. The remaining failures were **packaging version syntax**, not failed application compilation:
+
+- **Linux RPM** rejected `1.0.0-rc.1` because its package version format disallows a hyphen in that form.
+- **Windows MSI** rejected the nonnumeric `rc.1` prerelease segment in the Tauri application version.
+- **macOS** successfully built its bundle in that same CI attempt.
+
+Fixes committed:
+
+1. Set `1.0.0` consistently in the npm package, Cargo crate, Tauri application configuration, and UI version display.
+2. Add release notes with explicit unsupported-display-feature, unsigned-build, and user-acceptance caveats.
+3. Change CI to produce explicit **Linux DEB/RPM**, **Windows MSI**, and **macOS DMG** bundle targets; avoid platform-incompatible prerelease versions.
+4. Add a gated release workflow on merge to main. It runs frontend tests and all three platform build/test/bundle jobs, uploads unsigned artifacts, and creates `v1.0.0` with assets **only if every required job succeeds**. If an asset is missing, the release does not publish.
+5. Generate and commit `package-lock.json` and `src-tauri/Cargo.lock` for deterministic dependency resolution; CI uses `npm ci` and Cargo `--locked`.
+6. Fix the lock-generation workflow's concurrent-push issue via fetch + rebase.
+7. Version exported profile JSON with `schemaVersion: 1`, validate on import, retain compatibility with prior simple profiles, and add Vitest coverage.
+8. Avoid duplicate push and pull-request CI jobs for each release-branch commit.
+
+### Manual acceptance still distinct from CI
+
+Running a GitHub Actions application compilation or creating an installer does **not** verify that the graphical app launches successfully on real Windows/macOS/Linux machines, that notifications behave identically across desktop environments, or that external hardware controls work. These scenarios remain unverified until a device test report is recorded. EyeZen deliberately reports native color temperature, brightness, and display enumeration as unsupported in this version. No medical eye-protection or guaranteed reduction of symptoms is claimed.
+
+### Release publishing requirements
+
+- Source branch: `release-1.0.0` and draft PR #1: https://github.com/sanskarIN/EyeZen/pull/1
+- After verifying the latest PR checks, merge into `main`. Main triggers the gated release workflow.
+- The release workflow tests, builds, and uploads unsigned installers; it refuses to publish unless the expected DEB/RPM/MSI/DMG artifacts exist.
+- Treat `docs/release-checklist.md` as the remaining manual QA and long-term release gate checklist.
+
