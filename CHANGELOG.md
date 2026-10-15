@@ -2,7 +2,7 @@
 
 All notable release changes will be documented here.
 
-## [Unreleased] — v1.0.0 release candidate
+## [1.0.0] — 2026-10-15
 
 ### Added
 - Tauri 2 + React/TypeScript app architecture
@@ -20,7 +20,7 @@ All notable release changes will be documented here.
 ### Known limitations
 - Native brightness/color-temperature adjustments and physical display enumeration are not implemented
 - Reminder and schedule runtime may be suspended when the application is closed
-- Stable v1.0.0 has not been tagged, validated or published
-- Hardware, OS accessibility, packaging and signing remain to be verified
+- Platform-specific install/launch and hardware validation remain outside CI coverage
+- Hardware, assistive-technology, notarization and publisher-signing remain to be verified
 
 Use [what_changed.md](what_changed.md) for more detailed progress and outstanding release blockers.
