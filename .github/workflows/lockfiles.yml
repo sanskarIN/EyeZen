@@ -44,4 +44,6 @@ jobs:
             exit 0
           fi
           git commit -m 'build(deps): pin npm and Cargo dependency resolution for v1.0.0'
+          git fetch origin release-1.0.0
+          git rebase origin/release-1.0.0
           git push origin HEAD:release-1.0.0
