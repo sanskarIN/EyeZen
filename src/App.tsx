@@ -11,7 +11,8 @@ import type { ComfortProfile, EyeZenState, PlatformReport, ScheduleRule } from "
 import { createDefaults, newBreaks, newComfort, themes } from "./defaults";
 import { activeSchedule, desktop, loadState, notifyBreak, platformReport, requestDisplayAdjustment, saveState } from "./services/native";
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
-import { isQuiet, validTime } from "./services/schedule";
+import { validTime } from "./services/schedule";
+import { evaluateBreak } from "./services/reminders";
 import { Empty, Panel, Range, Status, Toggle } from "./components/ui";
 import { ProfileNameField } from "./components/ProfileNameField";
 import { activateProfile, removeProfile } from "./services/profiles";
@@ -59,6 +60,8 @@ export default function App() {
   const [shortcutActive, setShortcutActive] = useState(false);
   const [breakPaused, setBreakPaused] = useState(false);
   const [sessionBreaks, setSessionBreaks] = useState(0);
+  const [breakDue, setBreakDue] = useState(false);
+  const [pauseRemaining, setPauseRemaining] = useState(0);
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const lastBreakAt = useRef(Date.now());
   const skipFirstSave = useRef(true);
@@ -188,18 +191,36 @@ export default function App() {
   }, [data?.activeProfileId, data?.manualOverride, data?.schedules, data?.profiles]);
 
   useEffect(() => {
-    if (!data?.breaks.enabled || breakPaused) { lastBreakAt.current = Date.now(); return; }
-    const timer = window.setInterval(() => {
-      const now = Date.now();
-      if (now - lastBreakAt.current < data.breaks.intervalMinutes * 60_000) return;
-      lastBreakAt.current = now;
-      if (isQuiet(data.breaks.quietStart, data.breaks.quietEnd)) return;
+    if (!data?.breaks.enabled || breakPaused) {
+      lastBreakAt.current = Date.now();
+      return;
+    }
+    const tick = () => {
+      const result = evaluateBreak(lastBreakAt.current, data.breaks, new Date(), pauseRemaining > 0);
+      lastBreakAt.current = result.anchor;
+      if (!result.due) return;
       setSessionBreaks(count => count + 1);
-      setNotification("A gentle reminder: consider taking a screen break.");
-      void notifyBreak().catch(() => setNotification("Break due. System notification unavailable."));
-    }, 10_000);
-    return () => window.clearInterval(timer);
-  }, [data?.breaks, breakPaused]);
+      setBreakDue(true);
+      void notifyBreak().catch(() => {
+        setNotification("Break due. System notification unavailable.");
+      });
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") tick(); };
+    const timer = window.setInterval(tick, 10_000);
+    window.addEventListener("focus", tick);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", tick);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [data?.breaks, breakPaused, pauseRemaining > 0]);
+
+  useEffect(() => {
+    if (pauseRemaining <= 0) return;
+    const timer = window.setTimeout(() => setPauseRemaining(seconds => Math.max(0, seconds - 1)), 1_000);
+    return () => window.clearTimeout(timer);
+  }, [pauseRemaining]);
 
   if (loadError) return <main className="fatal">
     <Shield size={38} /><h1>Unable to open EyeZen settings</h1><p>{loadError}</p>
@@ -268,6 +289,25 @@ export default function App() {
           Browser preview: settings are temporary and cannot control your displays. Open the Tauri desktop application to save locally.</div>}
         {notification && <div className="alert message-alert" role="status"><Info size={18}/><span>{notification}</span>
           <button onClick={() => setNotification("")} aria-label="Dismiss message">Dismiss</button></div>}
+        {breakDue && <div className="alert info-alert reminder-banner" role="status">
+          <Eye size={19}/><span>Time for an optional screen pause. Your reminder suggests {data.breaks.durationSeconds} seconds.</span>
+          <button className="secondary-btn" onClick={() => {
+            setBreakDue(false);
+            setPauseRemaining(data.breaks.durationSeconds);
+            lastBreakAt.current = Date.now();
+          }}>Start pause</button>
+          <button className="secondary-btn" onClick={() => {
+            setBreakDue(false);
+            lastBreakAt.current = Date.now();
+          }}>Dismiss</button>
+        </div>}
+        {pauseRemaining > 0 && <div className="alert info-alert reminder-banner" role="status">
+          <Clock3 size={19}/><span>Optional screen pause · {pauseRemaining} seconds remaining</span>
+          <button className="secondary-btn" onClick={() => {
+            setPauseRemaining(0);
+            lastBreakAt.current = Date.now();
+          }}>Finish early</button>
+        </div>}
 
         {screen === "dashboard" && <>
           <div className="hero-card">
