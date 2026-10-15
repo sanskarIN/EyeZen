@@ -34,17 +34,24 @@ pub struct OperationResult {
 pub fn report(app: &AppHandle) -> PlatformReport {
     let backend_ready = overlay::support_reason().is_none();
     let monitors = app.available_monitors().unwrap_or_default();
-    let displays = monitors.iter().enumerate().map(|(index, monitor)| DisplayInfo {
-        id: format!("display-{index}"),
-        name: format!(
-            "{} · {}×{} · ({}, {})",
-            monitor.name().map(String::as_str).unwrap_or("Unnamed monitor"),
-            monitor.size().width,
-            monitor.size().height,
-            monitor.position().x,
-            monitor.position().y,
-        ),
-    }).collect();
+    let displays = monitors
+        .iter()
+        .enumerate()
+        .map(|(index, monitor)| DisplayInfo {
+            id: format!("display-{index}"),
+            name: format!(
+                "{} · {}×{} · ({}, {})",
+                monitor
+                    .name()
+                    .map(String::as_str)
+                    .unwrap_or("Unnamed monitor"),
+                monitor.size().width,
+                monitor.size().height,
+                monitor.position().x,
+                monitor.position().y,
+            ),
+        })
+        .collect();
 
     PlatformReport {
         os: std::env::consts::OS,

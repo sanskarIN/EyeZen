@@ -50,7 +50,9 @@ pub fn support_reason() -> Option<&'static str> {
         if std::env::var_os("WAYLAND_DISPLAY").is_some()
             || std::env::var("XDG_SESSION_TYPE").ok().as_deref() == Some("wayland")
         {
-            return Some("Wayland blocks reliable global overlay placement; no overlays were created.");
+            return Some(
+                "Wayland blocks reliable global overlay placement; no overlays were created.",
+            );
         }
         if std::env::var_os("DISPLAY").is_none() {
             return Some("An X11 session is required for the experimental Linux comfort overlay.");
@@ -83,7 +85,10 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
 
     {
         let state = app.state::<OverlayState>();
-        let mut current = state.0.lock().map_err(|_| "Comfort state lock unavailable")?;
+        let mut current = state
+            .0
+            .lock()
+            .map_err(|_| "Comfort state lock unavailable")?;
         *current = settings.clone();
     }
 
@@ -154,7 +159,9 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
                 // Never expose an overlay that can intercept desktop input.
                 if let Err(error) = window.set_ignore_cursor_events(true) {
                     let _ = window.close();
-                    return Err(format!("Cannot enable click-through on display {index}: {error}"));
+                    return Err(format!(
+                        "Cannot enable click-through on display {index}: {error}"
+                    ));
                 }
                 window
             };
@@ -165,14 +172,24 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
                 ))
                 .map_err(|e| format!("Cannot position display {index}: {e}"))?;
             window
-                .set_size(PhysicalSize::new(monitor.size().width, monitor.size().height))
+                .set_size(PhysicalSize::new(
+                    monitor.size().width,
+                    monitor.size().height,
+                ))
                 .map_err(|e| format!("Cannot size display {index}: {e}"))?;
-            window.eval(&draw).map_err(|e| format!("Cannot color display {index}: {e}"))?;
-            window.show().map_err(|e| format!("Cannot show display {index}: {e}"))?;
+            window
+                .eval(&draw)
+                .map_err(|e| format!("Cannot color display {index}: {e}"))?;
+            window
+                .show()
+                .map_err(|e| format!("Cannot show display {index}: {e}"))?;
         }
         for (label, window) in app.webview_windows() {
             if let Some(suffix) = label.strip_prefix(PREFIX) {
-                if suffix.parse::<usize>().map_or(true, |index| index >= monitors.len()) {
+                if suffix
+                    .parse::<usize>()
+                    .map_or(true, |index| index >= monitors.len())
+                {
                     let _ = window.close();
                 }
             }
