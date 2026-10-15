@@ -4,7 +4,7 @@
 
 EyeZen is a privacy-focused, open-source desktop application for personalizing an on-screen workspace. It combines an expressive theme system, comfort preferences, workspace profiles, schedules, configurable break reminders, and accessibility settings.
 
-> **Stable:** [v1.1.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.1.0). **v1.1.1 in development:** [Pull Request #6](https://github.com/sanskarIN/EyeZen/pull/6) adds opt-in desktop-wide visual tinting across detected monitors. Read [v1.1.1 release notes](docs/release-notes-v1.1.1.md).
+> **Latest stable:** [EyeZen v1.1.1](https://github.com/sanskarIN/EyeZen/releases/tag/v1.1.1). Download unsigned installers for Windows, macOS Apple Silicon and Linux; release checks passed. See [v1.1.1 notes](docs/release-notes-v1.1.1.md) and [device acceptance checklist](docs/release-checklist-v1.1.1.md).
 
 ## Overview
 
