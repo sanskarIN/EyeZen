@@ -471,7 +471,11 @@ export default function App() {
         {screen === "breaks" && <div className="two-col">
           <Panel title="Gentle reminders" description="Flexible, optional reminders with quiet hours.">
             <Toggle label="Enable reminders" checked={data.breaks.enabled}
-              onChange={enabled => { patch({ breaks: { ...data.breaks, enabled } }); lastBreakAt.current = Date.now(); }}
+              onChange={enabled => {
+                patch({ breaks: { ...data.breaks, enabled } });
+                lastBreakAt.current = Date.now();
+                if (!enabled) { setBreakDue(false); setPauseRemaining(0); }
+              }}
               description="No webcam, activity tracking, or usage history."/>
             <Range title="Interval" value={data.breaks.intervalMinutes} min={5} max={120} step={5} suffix=" min"
               onChange={intervalMinutes => patch({ breaks: { ...data.breaks, intervalMinutes } })}/>
@@ -484,7 +488,12 @@ export default function App() {
                 onChange={e => { if (validTime(e.target.value)) patch({ breaks: { ...data.breaks, quietEnd: e.target.value } }); }}/></label>
             </div>
             <div className="button-row">
-              <button className="secondary-btn" onClick={() => { setBreakPaused(!breakPaused); lastBreakAt.current = Date.now(); }}>
+              <button className="secondary-btn" onClick={() => {
+                setBreakPaused(!breakPaused);
+                setBreakDue(false);
+                setPauseRemaining(0);
+                lastBreakAt.current = Date.now();
+              }}>
                 {breakPaused ? <Play size={16}/> : <Pause size={16}/>} {breakPaused ? "Resume" : "Pause"} reminders
               </button>
               <button className="secondary-btn" onClick={() => void previewReminder()}><Bell size={16}/> Test notification</button>
