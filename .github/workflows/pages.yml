@@ -1,0 +1,67 @@
+name: Publish EyeZen Web and Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'docs/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: eyezen-github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Verify and build web edition
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - name: Build Vite for the repository subpath
+        run: npm run build -- --base=/EyeZen/
+      - name: Confirm documentation and web app
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/docs/index.html
+          grep -q '/EyeZen/assets/' dist/index.html
+          grep -q 'Complete feature list' dist/docs/index.html
+          touch dist/.nojekyll
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy public documentation and app
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check GitHub Pages configuration
+        uses: actions/configure-pages@v5
+      - id: deployment
+        uses: actions/deploy-pages@v4
