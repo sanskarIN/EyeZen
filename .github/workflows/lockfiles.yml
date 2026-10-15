@@ -1,0 +1,47 @@
+name: Generate locked dependencies for v1.0.0
+
+on:
+  push:
+    branches: [release-1.0.0]
+    paths:
+      - 'package.json'
+      - 'src-tauri/Cargo.toml'
+      - '.github/workflows/lockfiles.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: eyezen-release-lockfiles
+  cancel-in-progress: true
+
+jobs:
+  lock:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release-1.0.0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Lock npm dependencies
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Lock Cargo dependencies
+        working-directory: src-tauri
+        run: cargo generate-lockfile
+      - name: Commit lockfiles
+        shell: bash
+        run: |
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add package-lock.json src-tauri/Cargo.lock
+          if git diff --cached --quiet; then
+            echo 'Dependencies already locked'
+            exit 0
+          fi
+          git commit -m 'build(deps): pin npm and Cargo dependency resolution for v1.0.0'
+          git push origin HEAD:release-1.0.0
