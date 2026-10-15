@@ -24,6 +24,12 @@ describe("configuration import validation", () => {
     expect(copy.name).toBe(source.name);
     expect(copy.id).not.toBe(source.id);
   });
+  it("supports versioned profile exports and rejects future schemas", () => {
+    const profile = createDefaults().profiles[0];
+    const wrapped = { schemaVersion: 1, kind: "eyezen-profile", profile };
+    expect(parseProfile(wrapped).name).toBe(profile.name);
+    expect(() => parseProfile({ ...wrapped, schemaVersion: 2 })).toThrow();
+  });
   it("rejects malformed imported comfort values", () => {
     expect(() => parseProfile({ ...createDefaults().profiles[0], comfort: { enabled: true, warmth: 999, intensity: 0 } })).toThrow();
   });
