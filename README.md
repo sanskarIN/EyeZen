@@ -4,7 +4,7 @@
 
 EyeZen is a privacy-focused, open-source desktop application for personalizing an on-screen workspace. It combines an expressive theme system, comfort preferences, workspace profiles, schedules, configurable break reminders, and accessibility settings.
 
-> **Stable:** [v1.0.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.0.0). **In development:** [v1.1.0 on release-1.1.0](https://github.com/sanskarIN/EyeZen/tree/release-1.1.0). The 1.1.0 tag/installers are not published until review and a manually approved release workflow succeed.
+> **Stable:** [v1.1.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.1.0). **v1.1.1 in development:** [Pull Request #6](https://github.com/sanskarIN/EyeZen/pull/6) adds opt-in desktop-wide visual tinting across detected monitors. Read [v1.1.1 release notes](docs/release-notes-v1.1.1.md).
 
 ## Overview
 
@@ -21,14 +21,15 @@ The UI includes Dashboard, Eye Comfort, Themes, Profiles, Automation, Break Assi
 - Complete local configuration export/import, schema checks, atomic-ish persistence with recovery backup
 - Priority-based day-of-week scheduling, overnight rules, manual override and runtime profile selection
 - Configurable in-app break reminders, quiet hours, pause/resume and opt-in OS notifications (permissions permitting)
-- Tauri capability report that accurately marks unsupported hardware/display integrations as unsupported
+- Tauri capability report with actual monitor enumeration and a separate screen-overlay status; physical hardware controls remain explicitly unsupported
+- In v1.1.1: opt-in per-monitor screen-wide warmth/dimming tint with click-through behavior and automatic geometry refresh
 - Keyboard navigable controls, visible focus indicators, semantic forms and supported contrast themes
 - Browser-preview support for exploring UI (preview configuration is intentionally not persisted)
 - Rust core unit tests, TypeScript scheduling tests, GitHub Actions test/build workflows
 
 ## Important limitations
 
-**EyeZen does not currently change physical monitor brightness, Windows Night light, macOS Night Shift, hardware color temperature, HDR, or ICC calibration.** The warmth/intensity sliders save *preferences* only. They do not pretend to be hardware controls. The Color-accurate work button disables EyeZen's own stored preferences, not any third-party or OS effects. It is not a guarantee that your display is calibrated.
+**EyeZen does not currently change physical monitor brightness, Windows Night light, macOS Night Shift, hardware color temperature, HDR, or ICC calibration.** In v1.1.1 the warmth/intensity sliders can create **click-through translucent visual tint windows across detected monitors** where the session supports them. This is *not* native color temperature or physical brightness control. Wayland is unsupported; X11 is experimental, and exclusive fullscreen/secure desktops may draw above overlays. The Color-accurate work button disables the EyeZen tint, not third-party or OS effects. The tray also provides an emergency **Disable screen comfort** action. It is not a guarantee that your display is calibrated.
 
 The scheduler and reminder timer are driven by the running desktop window's JavaScript runtime in this version. Behavior while suspended, fully closed, or under restricted background execution is not guaranteed. Desktop hardware, wake/sleep, dual-display and notification integrations need real-world validation before being claimed as verified on particular systems.
 
@@ -52,7 +53,7 @@ See [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for current
 ~~~sh
 git clone https://github.com/sanskarIN/EyeZen.git
 cd EyeZen
-git checkout release-1.1.0
+git checkout release-1.1.1
 npm install
 npm run icons
 npm run tauri dev
@@ -85,7 +86,7 @@ Read [docs/privacy.md](docs/privacy.md) and [SECURITY.md](SECURITY.md).
 
 - Frontend: React/TypeScript with modular services and CSS variables
 - Backend: Tauri commands, Rust state models, strict local validation, persistence, pure scheduling helper and platform capability registry
-- Native display adjustments: deliberately unsupported until vetted adapters are available
+- Native monitor tint overlays: added in v1.1.1 where supported; not a physical monitor adjustment
 
 Read [docs/architecture.md](docs/architecture.md), [docs/platform-support.md](docs/platform-support.md), and [docs/testing.md](docs/testing.md).
 
@@ -93,8 +94,9 @@ Read [docs/architecture.md](docs/architecture.md), [docs/platform-support.md](do
 
 1. **v1.0.0:** initial tested core, explicit platform limitations, unsigned packaging through automated checks.
 2. **v1.1.0:** profile/settings reliability, improved wake checks for reminders, optional timed pause; native background scheduling remains future work.
-3. **v1.2.x+:** vetted per-platform display adapters, multi-monitor enumeration, hardware brightness where supported; zero fabricated successes.
-4. **Future:** better theme composition, focus routines, color-accurate workflow safeguards, signed installers and community translations.
+3. **v1.1.1:** opt-in per-monitor visual tint overlays; hardware color/brightness remains untouched.
+4. **v1.2.x+:** vetted per-platform display adapters, multi-monitor enumeration, hardware brightness where supported; zero fabricated successes.
+5. **Future:** better theme composition, focus routines, color-accurate workflow safeguards, signed installers and community translations.
 
 See [what_changed.md](what_changed.md) for current implementation status and blockers.
 
