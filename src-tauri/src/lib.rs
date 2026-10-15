@@ -64,7 +64,13 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             let open = MenuItem::with_id(app, "open", "Open EyeZen", true, None::<&str>)?;
-            let emergency = MenuItem::with_id(app, "comfort-off", "Disable screen comfort", true, None::<&str>)?;
+            let emergency = MenuItem::with_id(
+                app,
+                "comfort-off",
+                "Disable screen comfort",
+                true,
+                None::<&str>,
+            )?;
             let quit = MenuItem::with_id(app, "quit", "Quit EyeZen", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open, &emergency, &quit])?;
             if let Some(icon) = app.default_window_icon() {
@@ -82,7 +88,8 @@ pub fn run() {
                         "comfort-off" => {
                             overlay::emergency_stop(app);
                             if let Some(main) = app.get_webview_window("main") {
-                                let _ = main.eval("window.dispatchEvent(new Event('eyezen:comfort-off'))");
+                                let _ = main
+                                    .eval("window.dispatchEvent(new Event('eyezen:comfort-off'))");
                             }
                         }
                         "quit" => app.exit(0),
@@ -93,7 +100,9 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            if window.label() == "main" && matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
+            if window.label() == "main"
+                && matches!(event, tauri::WindowEvent::CloseRequested { .. })
+            {
                 overlay::disable(&window.app_handle());
             }
         })
