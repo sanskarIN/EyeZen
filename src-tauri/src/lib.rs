@@ -6,7 +6,11 @@ mod storage;
 use models::{EyeZenState, ScheduleRule};
 use platform::{OperationResult, PlatformReport};
 use std::sync::Mutex;
-use tauri::{menu::{Menu, MenuItem}, tray::TrayIconBuilder, Manager, State};
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+    Manager, State,
+};
 
 #[tauri::command]
 fn load_state(app: tauri::AppHandle) -> Result<EyeZenState, String> {
@@ -15,8 +19,14 @@ fn load_state(app: tauri::AppHandle) -> Result<EyeZenState, String> {
 }
 
 #[tauri::command]
-fn save_state(app: tauri::AppHandle, data: EyeZenState, guard: State<'_, Mutex<()>>) -> Result<(), String> {
-    let _lock = guard.lock().map_err(|_| "Settings write lock is unavailable")?;
+fn save_state(
+    app: tauri::AppHandle,
+    data: EyeZenState,
+    guard: State<'_, Mutex<()>>,
+) -> Result<(), String> {
+    let _lock = guard
+        .lock()
+        .map_err(|_| "Settings write lock is unavailable")?;
     let path = storage::state_path(&app)?;
     storage::save(&path, &data)
 }
@@ -65,7 +75,11 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            load_state, save_state, get_platform_report, request_display_adjustment, matching_schedule
+            load_state,
+            save_state,
+            get_platform_report,
+            request_display_adjustment,
+            matching_schedule
         ])
         .run(tauri::generate_context!())
         .expect("unable to start EyeZen");

@@ -53,7 +53,8 @@ pub fn apply_display_settings() -> OperationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test] fn never_reports_fake_display_success() {
+    #[test]
+    fn never_reports_fake_display_success() {
         assert_eq!(apply_display_settings().status, "unsupported");
         assert!(report().displays.is_empty());
     }
