@@ -269,7 +269,7 @@ export default function App() {
       <div className="sidebar-bottom">
         <div className="sidebar-pill"><span className="online-dot"/><span>{desktop ? "LOCAL DESKTOP APP" : "BROWSER PREVIEW"}</span></div>
         <div className="side-help"><Heart size={17}/> Small steps, more comfort.</div>
-        <span className="version-label">EyeZen v1.0.0</span>
+        <span className="version-label">EyeZen v1.1.0</span>
       </div>
     </aside>
 
@@ -563,7 +563,7 @@ export default function App() {
         </div>}
 
         {screen === "about" && <div className="two-col">
-          <Panel title="EyeZen · Version 1.0.0" description="Your screen. Your comfort. Your environment.">
+          <Panel title="EyeZen · Version 1.1.0" description="Your screen. Your comfort. Your environment.">
             <div className="about-mark"><Eye size={58}/></div>
             <p className="readable">EyeZen is a local-first, cross-platform desktop workspace utility built with Rust, Tauri 2, React, and TypeScript.</p>
             <p className="readable">It helps you personalize the EyeZen interface, save comfort preferences, create profiles, and configure gentle reminders without cloud accounts or analytics.</p>
