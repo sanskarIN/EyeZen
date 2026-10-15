@@ -9,7 +9,7 @@ import {
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import type { ComfortProfile, EyeZenState, OverlayResult, PlatformReport, ScheduleRule } from "./types";
 import { createDefaults, newBreaks, newComfort, themes } from "./defaults";
-import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, saveState } from "./services/native";
+import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, requestWebNotificationPermission, saveState } from "./services/native";
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
 import { validTime } from "./services/schedule";
 import { evaluateBreak } from "./services/reminders";
@@ -200,6 +200,10 @@ export default function App() {
 
   async function previewReminder() {
     try {
+      if (!desktop && !(await requestWebNotificationPermission())) {
+        setNotification("Browser notifications are unavailable or permission was denied. In-app reminders still work while the tab is open.");
+        return;
+      }
       const sent = await notifyBreak();
       setNotification(sent ? "Test reminder submitted to the operating system." :
         "Notification not available or permission was not granted.");
@@ -330,7 +334,7 @@ export default function App() {
           <h1>{meta.title}</h1><p>{meta.description}</p>
         </div>
         {!desktop && <div className="alert info-alert" role="status"><Info size={18}/>
-          Browser preview: settings are temporary and cannot control your displays. Open the Tauri desktop application to save locally.</div>}
+          Web edition: themes, profiles, routines and backups are saved privately in this browser. No account or server is used. Only the desktop app can tint other application windows. <a href={import.meta.env.BASE_URL + "docs/"}>Read documentation</a>.</div>}
         {notification && <div className="alert message-alert" role="status"><Info size={18}/><span>{notification}</span>
           <button onClick={() => setNotification("")} aria-label="Dismiss message">Dismiss</button></div>}
         {breakDue && <div className="alert info-alert reminder-banner" role="status">
@@ -611,7 +615,7 @@ export default function App() {
 
         {screen === "settings" && <div className="two-col">
           <Panel title="Local settings" description="Private by default, with no account required.">
-            <div className="setting-line"><div><strong>Settings location</strong><p className="muted">OS application configuration directory · settings.json</p></div><Status kind="ok">Local</Status></div>
+            <div className="setting-line"><div><strong>Settings location</strong><p className="muted">{desktop ? "OS application configuration directory · settings.json" : "This browser’s local storage (private to this website origin)"}</p></div><Status kind="ok">Local</Status></div>
             <div className="setting-line"><div><strong>Onboarding</strong><p className="muted">Replay the first-run experience</p></div>
               <button className="secondary-btn" onClick={() => patch({ onboardingComplete: false })}>Show again</button></div>
             <div className="setting-line"><div><strong>Reset all preferences</strong><p className="muted">Restore built-in profiles and themes</p></div>
@@ -624,21 +628,21 @@ export default function App() {
                 onChange={e => { void fileImport(e.target.files?.[0], "settings"); e.currentTarget.value = ""; }}/></label></div>
             <div className="divider-line"/>
             <Toggle checked={shortcutActive} onChange={enabled => void setShortcut(enabled)}
-              label="Global dashboard shortcut" description="Command/Ctrl + Shift + E (registered for this session)"/>
+              label="Global dashboard shortcut" description={desktop ? "Command/Ctrl + Shift + E (registered for this session)" : "Desktop-only: browser pages cannot register global shortcuts"}/>
             <div className="inline-note"><Keyboard size={17}/> Shortcut registration may fail if already used by another application.</div>
           </Panel>
         </div>}
 
         {screen === "about" && <div className="two-col">
-          <Panel title="EyeZen · Version 1.1.1" description="Your screen. Your comfort. Your environment.">
+          <Panel title="EyeZen · Version 1.2.0" description="Your screen. Your comfort. Your environment.">
             <div className="about-mark"><Eye size={58}/></div>
-            <p className="readable">EyeZen is a local-first, cross-platform desktop workspace utility built with Rust, Tauri 2, React, and TypeScript.</p>
-            <p className="readable">It helps you personalize the EyeZen interface, save comfort preferences, create profiles, and configure gentle reminders without cloud accounts or analytics.</p>
+            <p className="readable">EyeZen is a local-first, local-first desktop and browser workspace utility built with Rust, Tauri 2, React, and TypeScript.</p>
+            <p className="readable">It helps you customize themes, locally saved profiles, schedules, and gentle reminders without accounts or analytics. The desktop app can additionally apply supported visual tint overlays to your screens.</p>
             <Status kind="neutral">Mozilla Public License 2.0</Status>
           </Panel>
           <Panel title="Built on clear boundaries">
             <div className="feature-bullets"><p><Shield size={17}/> Settings stay on this device</p>
-              <p><Monitor size={17}/> Unsupported native features are explicitly labeled</p>
+              <p><Monitor size={17}/> Screen-wide tinting is desktop-only; the web edition cannot tint other apps</p>
               <p><WandSparkles size={17}/> Interface themes do not recolor other applications</p>
               <p><Gauge size={17}/> No medical guarantees or eye-disease prevention claims</p></div>
             <a className="external-link" href="https://github.com/sanskarIN/EyeZen" target="_blank" rel="noreferrer">
@@ -646,7 +650,7 @@ export default function App() {
           </Panel>
         </div>}
 
-        <footer className="footer"><span>Made for a more comfortable workspace.</span><span>EyeZen • Local-first • MPL-2.0</span></footer>
+        <footer className="footer"><span>Made for a more comfortable workspace.</span><span><a href={import.meta.env.BASE_URL + "docs/"}>Documentation & features</a> · <a href="https://github.com/sanskarIN/EyeZen/releases" target="_blank" rel="noreferrer">Desktop downloads</a> · EyeZen • MPL-2.0</span></footer>
       </div>
     </main>
 
