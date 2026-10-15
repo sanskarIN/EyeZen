@@ -458,9 +458,23 @@ export default function App() {
                 onChange={e => updateRule(rule.id, r => ({ ...r, profileId: e.target.value }))}>
                 {data.profiles.map(p => <option value={p.id} key={p.id}>{p.name}</option>)}</select></label>
               <label className="input-label">Starts<input type="time" value={rule.start}
-                onChange={e => { if (validTime(e.target.value)) updateRule(rule.id, r => ({ ...r, start: e.target.value })); }}/></label>
+                onChange={e => {
+                  if (!validTime(e.target.value)) return;
+                  if (e.target.value === rule.end) {
+                    setNotification("Schedule start and end must be different.");
+                    return;
+                  }
+                  updateRule(rule.id, r => ({ ...r, start: e.target.value }));
+                }}/></label>
               <label className="input-label">Ends<input type="time" value={rule.end}
-                onChange={e => { if (validTime(e.target.value)) updateRule(rule.id, r => ({ ...r, end: e.target.value })); }}/></label>
+                onChange={e => {
+                  if (!validTime(e.target.value)) return;
+                  if (e.target.value === rule.start) {
+                    setNotification("Schedule start and end must be different.");
+                    return;
+                  }
+                  updateRule(rule.id, r => ({ ...r, end: e.target.value }));
+                }}/></label>
             </div>
             <div className="day-picker" aria-label="Schedule weekdays">{weekdays.map((day, number) =>
               <button key={day} className={rule.weekdays.includes(number) ? "picked" : ""}
