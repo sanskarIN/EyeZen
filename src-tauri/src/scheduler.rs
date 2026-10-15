@@ -4,10 +4,7 @@ use chrono::{DateTime, Datelike, Local, NaiveTime, Timelike};
 fn parse_time(s: &str) -> Option<NaiveTime> {
     NaiveTime::parse_from_str(s, "%H:%M").ok()
 }
-pub fn matching_rule(
-    rules: &[ScheduleRule],
-    now: DateTime<Local>,
-) -> Option<&ScheduleRule> {
+pub fn matching_rule(rules: &[ScheduleRule], now: DateTime<Local>) -> Option<&ScheduleRule> {
     let day = now.weekday().num_days_from_monday();
     let previous_day = (day + 6) % 7;
     let clock = NaiveTime::from_hms_opt(now.hour(), now.minute(), now.second())?;
