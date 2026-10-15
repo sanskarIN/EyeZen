@@ -422,8 +422,14 @@ export default function App() {
               onChange={enabled => changeProfile(selected.id, p => ({ ...p, comfort: { ...p.comfort, enabled } }))}/>
             <Range title="Warmth preference" min={0} max={100} value={selected.comfort.warmth} suffix="%"
               onChange={warmth => changeProfile(selected.id, p => ({ ...p, comfort: { ...p.comfort, warmth } }))}/>
+            <Range title="Intensity preference" min={0} max={100} value={selected.comfort.intensity} suffix="%"
+              onChange={intensity => changeProfile(selected.id, p => ({ ...p, comfort: { ...p.comfort, intensity } }))}/>
             <Toggle label="Break reminders for this profile" checked={selected.breaks.enabled}
               onChange={enabled => changeProfile(selected.id, p => ({ ...p, breaks: { ...p.breaks, enabled } }))}/>
+            <Range title="Break interval" min={5} max={240} step={5} value={selected.breaks.intervalMinutes} suffix=" min"
+              onChange={intervalMinutes => changeProfile(selected.id, p => ({ ...p, breaks: { ...p.breaks, intervalMinutes } }))}/>
+            <Range title="Suggested pause" min={10} max={600} step={10} value={selected.breaks.durationSeconds} suffix=" sec"
+              onChange={durationSeconds => changeProfile(selected.id, p => ({ ...p, breaks: { ...p.breaks, durationSeconds } }))}/>
             <div className="button-row">
               <button className="primary-btn" onClick={() => applyProfile(selected.id)}><Check size={16}/> Apply profile</button>
               <button className="secondary-btn" onClick={() => exportJson({ schemaVersion: 1, kind: "eyezen-profile", profile: selected }, "eyezen-profile.json")}><Download size={16}/> Export</button>
