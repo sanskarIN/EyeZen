@@ -524,7 +524,7 @@ export default function App() {
         </div>}
 
         {screen === "about" && <div className="two-col">
-          <Panel title="EyeZen · Release candidate 1" description="Your screen. Your comfort. Your environment.">
+          <Panel title="EyeZen · Version 1.0.0" description="Your screen. Your comfort. Your environment.">
             <div className="about-mark"><Eye size={58}/></div>
             <p className="readable">EyeZen is a local-first, cross-platform desktop workspace utility built with Rust, Tauri 2, React, and TypeScript.</p>
             <p className="readable">It helps you personalize the EyeZen interface, save comfort preferences, create profiles, and configure gentle reminders without cloud accounts or analytics.</p>
@@ -549,7 +549,7 @@ export default function App() {
         <div className="onboard-icon"><Eye size={35}/></div>
         <span className="eyebrow">WELCOME TO YOUR NEW WORKSPACE</span>
         <h2 id="onboard-title">Comfort begins with choice.</h2>
-        <p>Choose an appearance, create flexible routines, and keep your settings on your device. Display hardware control depends on your OS and is not included in this candidate build.</p>
+        <p>Choose an appearance, create flexible routines, and keep your settings on your device. Display hardware control depends on your OS and is not included in this build.</p>
         <div className="onboard-options"><button onClick={() => patch({ theme: "dark" })} className={data.theme === "dark" ? "picked" : ""}><Moon size={20}/> Dark</button>
           <button onClick={() => patch({ theme: "light" })} className={data.theme === "light" ? "picked" : ""}><Sun size={20}/> Light</button>
           <button onClick={() => patch({ theme: "system" })} className={data.theme === "system" ? "picked" : ""}><Laptop size={20}/> System</button></div>
