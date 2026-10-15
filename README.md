@@ -4,7 +4,7 @@
 
 EyeZen is a privacy-focused, open-source desktop application for personalizing an on-screen workspace. It combines an expressive theme system, comfort preferences, workspace profiles, schedules, configurable break reminders, and accessibility settings.
 
-> **Release status: v1.0.0 release candidate (rc.1), not a verified stable release.** No binary installers are claimed to exist yet. The release checklist and platform tests must pass before the v1.0.0 tag is appropriate.
+> **v1.0.0 release preparation.** Signed installers and hardware control are not provided. Installation packages are published only after Windows, macOS, and Linux CI build gates pass. Check [Releases](https://github.com/sanskarIN/EyeZen/releases) for actual downloads.
 
 ## Overview
 
@@ -12,7 +12,7 @@ EyeZen is written in Rust, Tauri 2, TypeScript, React, and Vite. It runs locally
 
 The UI includes Dashboard, Eye Comfort, Themes, Profiles, Automation, Break Assistant, Displays, Accessibility, Settings, and About. It also has a first-run introduction, a local configuration file, native tray actions (Open/Quit, where supported), and optional session-only global dashboard shortcut registration.
 
-## What works in this candidate
+## Implemented features
 
 - Ten interface palettes: Light, Dark, System, Warm Dark, Warm Light, Sepia Reading, Midnight, AMOLED-Inspired, High Contrast, and Grayscale
 - Application-wide theme tokens, accent colors, adjustable text size and motion reduction
@@ -30,7 +30,7 @@ The UI includes Dashboard, Eye Comfort, Themes, Profiles, Automation, Break Assi
 
 **EyeZen does not currently change physical monitor brightness, Windows Night light, macOS Night Shift, hardware color temperature, HDR, or ICC calibration.** The warmth/intensity sliders save *preferences* only. They do not pretend to be hardware controls. The Color-accurate work button disables EyeZen's own stored preferences, not any third-party or OS effects. It is not a guarantee that your display is calibrated.
 
-The scheduler and reminder timer are driven by the running desktop window's JavaScript runtime in this candidate. Behavior while suspended, fully closed, or under restricted background execution is not guaranteed. Desktop hardware, wake/sleep, dual-display and notification integrations need real-world validation before stable release.
+The scheduler and reminder timer are driven by the running desktop window's JavaScript runtime in this version. Behavior while suspended, fully closed, or under restricted background execution is not guaranteed. Desktop hardware, wake/sleep, dual-display and notification integrations need real-world validation before being claimed as verified on particular systems.
 
 This is customization software, **not a medical device**. No feature can guarantee prevention of eye disease or eliminate eye strain.
 
@@ -91,7 +91,7 @@ Read [docs/architecture.md](docs/architecture.md), [docs/platform-support.md](do
 
 ## Roadmap
 
-1. **v1.0.0:** complete core verification, accessibility and native OS packaging, triage CI, validate persistence and scheduling with actual OS testing.
+1. **v1.0.0:** initial tested core, explicit platform limitations, unsigned packaging through automated checks.
 2. **v1.1.x:** background scheduler, broader shortcut/tray controls, robust sleep/wake handling, offline-integrated theme/profile studio.
 3. **v1.2.x+:** vetted per-platform display adapters, multi-monitor enumeration, hardware brightness where supported; zero fabricated successes.
 4. **Future:** better theme composition, focus routines, color-accurate workflow safeguards, signed installers and community translations.
