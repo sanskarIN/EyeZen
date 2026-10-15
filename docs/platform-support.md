@@ -1,29 +1,32 @@
-# Platform support and honest capabilities
+# Platform support and screen comfort capability
 
-**Status:** OS targets are intended; OS and hardware acceptance testing is not yet documented. Automated CI is not real-hardware acceptance testing.
+EyeZen v1.1.1 introduces an opt-in **screen-wide visual tint overlay**. It is **not** a hardware brightness or color-temperature control.
 
-| Capability | Windows 10/11 | macOS | Linux X11 / Wayland |
-| --- | --- | --- | --- |
-| EyeZen interface themes | Implemented in application | Implemented in application | Implemented in application |
-| Local config and profiles | Implemented; needs validation | Implemented; needs validation | Implemented; needs validation |
-| Schedule rules | Implemented while runtime active | Implemented while runtime active | Implemented while runtime active |
-| OS notifications | Through permissioned Tauri plugin; unverified | Through permissioned Tauri plugin; unverified | Through permissioned Tauri plugin; unverified |
-| Basic tray Open/Quit | Tauri tray integration; unverified | Tauri tray integration; unverified | Varies by desktop environment; unverified |
-| Global dashboard shortcut | Tauri plugin; conflicts may prevent registration | Tauri plugin; conflicts may prevent registration | Varies by compositor/desktop; unverified |
-| Physical brightness | **Unsupported** | **Unsupported** | **Unsupported** |
-| Native color temperature | **Unsupported** | **Unsupported** | **Unsupported** |
-| Physical display enumeration | **Unsupported** | **Unsupported** | **Unsupported** |
-| Hardware-specific multi-monitor control | **Unsupported** | **Unsupported** | **Unsupported** |
-| Custom overlay | Not implemented | Not implemented | Not implemented |
+| Feature | Windows | macOS | Linux X11 | Linux Wayland |
+| --- | --- | --- | --- | --- |
+| Interface themes and local profiles | Implemented | Implemented | Implemented | Implemented |
+| Profile-based screen comfort | Implemented using transparent window overlays | Implemented using transparent window overlays (private API) | Experimental; compositor-dependent | Unsupported |
+| Multiple detected monitor tint windows | Implemented; real-device validation required | Implemented; real-device validation required | Experimental; physical positioning not uniform | Unsupported |
+| Screen monitor enumeration | Tauri OS API | Tauri OS API | Tauri OS API | May enumerate but cannot guarantee placement |
+| Click-through input safety | Required; fail closed on error | Required; fail closed on error | Required; fail closed on error | Not attempted |
+| Physical monitor brightness/backlight | Unsupported | Unsupported | Unsupported | Unsupported |
+| Calibrated hardware color temperature / ICC | Unsupported | Unsupported | Unsupported | Unsupported |
+| HDR-specific or fullscreen-exclusive tint | Not guaranteed | Not guaranteed | Not guaranteed | Not guaranteed |
+| OS notifications / tray shortcuts | Plugin-dependent | Plugin-dependent | Environment-dependent | Environment-dependent |
 
-## Notes
+The overlays are local transparent windows, with conservative alpha strength. They do not change gamma ramps, OS Night Light or Night Shift, external monitor controls or calibration profiles. Enabling comfort can change the *perceived color* of other applications and should be disabled before color-sensitive work.
 
-Windows Night light is not controlled by undocumented registry access. macOS Night Shift is not controlled through private frameworks. Wayland compositors may reject integrations that work under X11. Many external displays cannot be controlled through generic brightness APIs.
+## Safety and recovery
 
-If no supported backend exists, the application states so and does not fake success. Profile warmth/intensity values are preferences and have no immediate hardware effect.
+- Turning Screen Comfort off, selecting **Color-accurate work**, and quitting/closing the main app remove the overlays.
+- The EyeZen tray offers **Disable screen comfort** for immediate removal. It prevents an automatic timer refresh from silently restoring tint; the preference must be turned off and then on to resume.
+- If an overlay cannot become click-through, be positioned, sized or rendered, EyeZen removes its overlays and reports an error.
+- Overlay refresh is active while the EyeZen process is running; it is not an OS service and does not modify hardware.
+- Wayland sessions are explicitly not supported because unprivileged apps generally cannot guarantee cross-app global overlays.
+- macOS transparency uses Tauri `macOSPrivateApi`, disallowing Mac App Store distribution through standard rules. This does not affect the standalone unsigned DMG build.
 
-Before promising support in a release, test the exact OS version, built-in/external monitor arrangement, display permissions, HDR/color management path, startup and shutdown recovery, sleep/wake, tray and notification availability.
+## Acceptance testing needed
 
-## Packaging
+CI compilation and unit tests **are not proof of actual screen-overlay behavior** on real equipment. Tests on physical Windows/macOS/Linux desktop systems are needed for: single and mixed-DPI dual monitors, negative display coordinates, hot-plug, suspend/resume, color-critical workflows, clicks/typing through the overlay, fullscreen, cursor behavior, OS permission prompts, uninstall and crash cleanup.
 
-Tauri can generate bundles for each configured target, subject to appropriate runners and toolchains. Unsigned CI bundle artifacts are not signed distributable releases. Verify built artifacts, installation/uninstallation, code signing and malware-scanner behavior before a stable tag.
+Read [v1.1.1 release notes](release-notes-v1.1.1.md) for the implementation boundaries.
