@@ -13,6 +13,8 @@ import { activeSchedule, desktop, loadState, notifyBreak, platformReport, reques
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
 import { isQuiet, validTime } from "./services/schedule";
 import { Empty, Panel, Range, Status, Toggle } from "./components/ui";
+import { ProfileNameField } from "./components/ProfileNameField";
+import { activateProfile, removeProfile } from "./services/profiles";
 
 const navigation = [
   { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
@@ -112,15 +114,7 @@ export default function App() {
   }
   function patch(partial: Partial<EyeZenState>) { change(s => ({ ...s, ...partial })); }
   function applyProfile(id: string, manual = true) {
-    change(s => {
-      const profile = s.profiles.find(p => p.id === id);
-      if (!profile) return s;
-      return {
-        ...s, activeProfileId: id, theme: profile.theme,
-        comfort: { ...profile.comfort }, breaks: { ...profile.breaks },
-        manualOverride: manual
-      };
-    });
+    change(s => activateProfile(s, id, manual));
     setSelectedProfile(id);
     setNotification("Profile applied. Unsupported display controls were not changed.");
   }
@@ -139,11 +133,7 @@ export default function App() {
   function deleteProfile(id: string) {
     if (!data || data.profiles.length < 2) { setNotification("Keep at least one profile."); return; }
     if (!window.confirm("Delete this profile and its associated schedules?")) return;
-    change(s => {
-      const remaining = s.profiles.filter(p => p.id !== id);
-      return { ...s, profiles: remaining, activeProfileId: s.activeProfileId === id ? remaining[0].id : s.activeProfileId,
-        schedules: s.schedules.filter(r => r.profileId !== id) };
-    });
+    change(s => removeProfile(s, id));
     setSelectedProfile(data.profiles.find(p => p.id !== id)?.id ?? "");
   }
   function addSchedule() {
@@ -381,8 +371,8 @@ export default function App() {
           </Panel>
           {selected && <Panel title="Edit profile" description="Changes are saved automatically on this device." className="editor-panel">
             <div className="form-grid">
-              <label className="input-label">Profile name<input type="text" maxLength={80} value={selected.name}
-                onChange={e => changeProfile(selected.id, p => ({ ...p, name: e.target.value }))}/></label>
+              <ProfileNameField id={selected.id} name={selected.name}
+                onSave={name => changeProfile(selected.id, p => ({ ...p, name }))} />
               <label className="input-label">Application theme<select value={selected.theme}
                 onChange={e => changeProfile(selected.id, p => ({ ...p, theme: e.target.value }))}>
                 {themes.map(t => <option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
