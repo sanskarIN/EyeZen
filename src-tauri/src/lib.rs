@@ -1,9 +1,10 @@
 mod models;
+mod overlay;
 mod platform;
 mod scheduler;
 mod storage;
 
-use models::{EyeZenState, ScheduleRule};
+use models::{ComfortSettings, EyeZenState, ScheduleRule};
 use platform::{OperationResult, PlatformReport};
 use std::sync::Mutex;
 use tauri::{
@@ -32,8 +33,16 @@ fn save_state(
 }
 
 #[tauri::command]
-fn get_platform_report() -> PlatformReport {
-    platform::report()
+fn get_platform_report(app: tauri::AppHandle) -> PlatformReport {
+    platform::report(&app)
+}
+
+#[tauri::command]
+async fn apply_comfort_overlay(
+    app: tauri::AppHandle,
+    settings: ComfortSettings,
+) -> Result<overlay::OverlayResult, String> {
+    overlay::apply(app, settings).await
 }
 
 #[tauri::command]
@@ -49,6 +58,7 @@ fn matching_schedule(rules: Vec<ScheduleRule>) -> Option<String> {
 pub fn run() {
     tauri::Builder::default()
         .manage(Mutex::new(()))
+        .manage(overlay::OverlayState::default())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
@@ -79,7 +89,8 @@ pub fn run() {
             save_state,
             get_platform_report,
             request_display_adjustment,
-            matching_schedule
+            matching_schedule,
+            apply_comfort_overlay
         ])
         .run(tauri::generate_context!())
         .expect("unable to start EyeZen");
