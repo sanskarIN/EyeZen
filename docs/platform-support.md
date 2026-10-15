@@ -1,6 +1,6 @@
 # Platform support and honest capabilities
 
-**Status:** OS targets are intended; no OS/hardware environment is declared verified for v1.0.0 stable. Automated CI is not real-hardware acceptance testing.
+**Status:** OS targets are intended; OS and hardware acceptance testing is not yet documented. Automated CI is not real-hardware acceptance testing.
 
 | Capability | Windows 10/11 | macOS | Linux X11 / Wayland |
 | --- | --- | --- | --- |
