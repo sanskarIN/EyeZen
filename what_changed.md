@@ -1,3 +1,49 @@
+# EyeZen v1.1.1 — Desktop-wide comfort implementation
+
+**Goal:** Address the concrete v1.1.0 bug: saved `warmth` and `intensity` values did not change what the user saw on other desktop applications or secondary monitors.
+
+**Branch:** `release-1.1.1`  
+**PR:** https://github.com/sanskarIN/EyeZen/pull/6  
+**Status:** Native overlay implementation and test/release preparation; automated and physical-device verification gates are tracked separately.
+
+## Root cause and fix
+
+v1.1.0 stored a `ComfortSettings` object, but `platform::apply_display_settings()` returned `unsupported` and there was no native renderer. The v1.1.1 implementation adds explicit, permissionless desktop window tinting rather than changing physical monitor settings.
+
+## Implementation commits and changes
+
+1. Added `public/comfort-overlay.html` with two non-interactive transparent paint layers: amber warmth and modest black tint.
+2. Added `src-tauri/src/overlay.rs` and `OverlayState` to create a window for every `AppHandle::available_monitors()` result. Each window is transparent, undecorated, always on top, hidden from the taskbar, sized and positioned from OS physical monitor coordinates.
+3. Set `set_ignore_cursor_events(true)` *before showing* any overlay; if click-through, window construction or placement fails, EyeZen closes the overlays and reports failure. The session does not incorrectly claim the effect was applied.
+4. Added an async `apply_comfort_overlay` Tauri command to avoid the known Windows synchronous webview-creation deadlock.
+5. Mapped existing warmth/intensity sliders to conservative alpha limits (maximum 0.35 amber, maximum 0.22 dimming) and unit tests for bounded values and disabled state.
+6. Updated real platform capability reporting and OS monitor enumeration. Direct physical monitor brightness, ICC/gamma, native OS Night Light/Night Shift, and color temperature remain explicitly unsupported.
+7. React now applies comfort on app startup, during manual slider changes, after profile selection and every 20 seconds while enabled for monitor layout changes.
+8. Added error/status text to the Screen Comfort and Displays views, and differentiated desktop-overlay availability from hardware integration.
+9. Added an emergency **Disable screen comfort** tray item. The emergency kill state prevents periodic refresh from immediately re-enabling the overlay. Closing the main window also removes overlays.
+10. On macOS enabled Tauri private transparency support. This is not Mac App Store compatible; standalone macOS distribution requires additional device acceptance.
+11. On Linux support is limited to X11 as experimental; Wayland is deliberately marked unavailable.
+12. Updated npm, Cargo and Tauri application versions to v1.1.1; synchronized locked dependency files.
+13. Updated Rust formatting/lockfile CI, full multi-OS CI, release packaging pipeline, checklist, README, changelog and platform documentation.
+
+All commits use requested author email `sanskarin@outlook.in`.
+
+## Product behavior / important limitations
+
+The visible effect is a tint *above the desktop*, not a hardware backlight adjustment or calibrated color temperature. An overlay can affect perceived color, so disable it for color-accurate work. Some exclusive fullscreen/secure windows may draw above the overlay. Nonstandard window managers and Wayland do not provide a reliable global overlay API. EyeZen does not claim medical benefit or eye-disease prevention.
+
+The browser preview remains intentionally unable to tint other desktop windows, so GitHub Pages has not been enabled.
+
+## What is still required
+
+- Automated Rustfmt, Clippy, Cargo tests, TypeScript/Vitest tests and unsigned installers across OS runners.
+- Physical-device tests for real multi-monitor placement, negative coordinates, mixed DPI, cursor click-through, hotplug, suspend/resume and emergency tray stop.
+- Confirm Mac standalone DMG behavior and signed distribution policy.
+
+See `docs/release-checklist-v1.1.1.md` and `docs/release-notes-v1.1.1.md` for acceptance and release limitations.
+
+---
+
 # EyeZen — v1.1.0 development report
 
 **Updated:** 2026-10-15  
