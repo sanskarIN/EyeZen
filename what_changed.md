@@ -23,10 +23,11 @@ The project is a **desktop application**, not a complete web edition. The browse
 6. **Name editing**: Introduced a dedicated draft field that can be cleared temporarily during typing but commits only valid, nonblank, bounded names when focus leaves the field. This prevents transient invalid configuration writes.
 7. **Break assistant logic**: Added a pure reminder decision module and tests, respecting user preferences, quiet hours, paused state, backwards clock changes and no mass catch-up reminders.
 8. **In-app optional pause**: A reminder banner permits starting a configurable-duration countdown, early completion or dismissal. Focus/visibility listeners re-evaluate while the app is running. Switching off or pausing reminders clears pending banners/countdowns.
-9. **Schedule tie-breaking**: Aligned TypeScript deterministic ID ordering with the Rust scheduler.
-10. **Release build preparation**: Version identifiers updated to 1.1.0 for the Rust crate, Tauri config, frontend/UI and npm package. Lockfile generation workflow produces matching npm/Cargo dependency locks.
-11. **Actions pipelines**: Scoped format/lock workflows to `release-1.1.0`. The release workflow is **manual only**, requires explicit `PUBLISH` input on `main`, and verifies frontend and all platform bundles before creating a tag and attaching Windows MSI, macOS DMG, Linux DEB/RPM plus SHA-256 checksums.
-12. **Documentation**: Expanded README, changelog, draft v1.1.0 notes and manual/automated QA requirements.
+9. **Schedule editor safety**: The UI now blocks equal start/end time edits rather than allowing an invalid schedule to be saved. The profile editor exposes intensity and full per-profile reminder intervals/durations, and the Break Assistant sliders match the complete backend-supported ranges (5–240 minutes, 10–600 seconds).
+10. **Schedule tie-breaking**: Aligned TypeScript deterministic ID ordering with the Rust scheduler.
+11. **Release build preparation**: Version identifiers updated to 1.1.0 for the Rust crate, Tauri config, frontend/UI and npm package. Lockfile generation workflow produces matching npm/Cargo dependency locks.
+12. **Actions pipelines**: Scoped format/lock workflows to `release-1.1.0`. The release workflow is **manual only**, requires explicit `PUBLISH` input on `main`, and verifies frontend and all platform bundles before creating a tag and attaching Windows MSI, macOS DMG, Linux DEB/RPM plus SHA-256 checksums.
+13. **Documentation**: Expanded README, changelog, draft v1.1.0 notes and manual/automated QA requirements.
 
 Separate, meaningful commits use the requested author email **sanskarin@outlook.in**.
 
