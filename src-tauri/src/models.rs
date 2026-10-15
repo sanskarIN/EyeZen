@@ -174,6 +174,14 @@ impl EyeZenState {
         if self.theme.len() > 64 {
             return Err("Theme identifier too long".into());
         }
+        if self.comfort.warmth > 100 || self.comfort.intensity > 100 {
+            return Err("Comfort values must be 0–100".into());
+        }
+        for profile in &self.profiles {
+            if profile.comfort.warmth > 100 || profile.comfort.intensity > 100 {
+                return Err("Profile comfort values must be 0–100".into());
+            }
+        }
         check_breaks(&self.breaks)?;
         let mut schedule_ids = HashSet::new();
         for rule in &self.schedules {
@@ -214,6 +222,12 @@ mod tests {
     fn rejects_incorrect_ranges() {
         let mut state = EyeZenState::default();
         state.breaks.interval_minutes = 0;
+        assert!(state.validate().is_err());
+    }
+    #[test]
+    fn rejects_out_of_range_comfort_values() {
+        let mut state = EyeZenState::default();
+        state.comfort.warmth = 255;
         assert!(state.validate().is_err());
     }
     #[test]
