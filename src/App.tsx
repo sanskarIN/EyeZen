@@ -483,9 +483,9 @@ export default function App() {
                 if (!enabled) { setBreakDue(false); setPauseRemaining(0); }
               }}
               description="No webcam, activity tracking, or usage history."/>
-            <Range title="Interval" value={data.breaks.intervalMinutes} min={5} max={120} step={5} suffix=" min"
+            <Range title="Interval" value={data.breaks.intervalMinutes} min={5} max={240} step={5} suffix=" min"
               onChange={intervalMinutes => patch({ breaks: { ...data.breaks, intervalMinutes } })}/>
-            <Range title="Suggested pause" value={data.breaks.durationSeconds} min={10} max={120} step={10} suffix=" sec"
+            <Range title="Suggested pause" value={data.breaks.durationSeconds} min={10} max={600} step={10} suffix=" sec"
               onChange={durationSeconds => patch({ breaks: { ...data.breaks, durationSeconds } })}/>
             <div className="form-grid">
               <label className="input-label">Quiet from<input type="time" value={data.breaks.quietStart}
