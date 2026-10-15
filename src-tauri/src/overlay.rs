@@ -1,6 +1,6 @@
 use crate::models::ComfortSettings;
 use serde::Serialize;
-use std::sync::Mutex;
+use std::sync::{atomic::{AtomicBool, Ordering}, Mutex};
 use tauri::{
     webview::{PageLoadEvent, WebviewWindowBuilder},
     AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl,
@@ -11,6 +11,15 @@ const PREFIX: &str = "comfort-overlay-";
 /// A non-invasive tint overlay. It does not modify calibration, gamma,
 /// operating-system night-mode settings, or physical monitor backlights.
 pub struct OverlayState(pub Mutex<ComfortSettings>);
+
+/// Emergency tray dismissal stays effective even if the main UI is frozen.
+pub struct EmergencyOff(pub AtomicBool);
+
+impl Default for EmergencyOff {
+    fn default() -> Self {
+        Self(AtomicBool::new(false))
+    }
+}
 
 impl Default for OverlayState {
     fn default() -> Self {
@@ -69,6 +78,13 @@ fn close_overlays(app: &AppHandle) {
     }
 }
 
+pub fn emergency_stop(app: &AppHandle) {
+    if let Some(flag) = app.try_state::<EmergencyOff>() {
+        flag.0.store(true, Ordering::SeqCst);
+    }
+    close_overlays(app);
+}
+
 pub fn disable(app: &AppHandle) {
     if let Some(runtime) = app.try_state::<OverlayState>() {
         if let Ok(mut settings) = runtime.0.lock() {
@@ -93,10 +109,22 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
     }
 
     if !settings.enabled {
+        if let Some(flag) = app.try_state::<EmergencyOff>() {
+            flag.0.store(false, Ordering::SeqCst);
+        }
         close_overlays(&app);
         return Ok(OverlayResult {
             status: "disabled",
             message: "EyeZen comfort overlays removed from every display.".into(),
+            display_count: 0,
+        });
+    }
+
+    if app.state::<EmergencyOff>().0.load(Ordering::SeqCst) {
+        close_overlays(&app);
+        return Ok(OverlayResult {
+            status: "disabled",
+            message: "Emergency stop is active. Switch screen comfort off and on to resume.".into(),
             display_count: 0,
         });
     }
