@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run icons
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -58,11 +58,17 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Clippy
         working-directory: src-tauri
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --locked --all-targets -- -D warnings
       - name: Unit tests
         working-directory: src-tauri
-        run: cargo test
+        run: cargo test --locked
       - name: Frontend bundle
         run: npm run build
       - name: Desktop bundle (unsigned)
-        run: npm run tauri build
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Linux) npx tauri build --bundles deb,rpm ;;
+            Windows) npx tauri build --bundles msi ;;
+            macOS) npx tauri build --bundles dmg ;;
+          esac
