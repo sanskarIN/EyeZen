@@ -180,7 +180,7 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
                         let app = window.app_handle();
                         if let Some(state) = app.try_state::<OverlayState>() {
                             if let Ok(settings) = state.0.lock() {
-                                let _ = window.eval(&update_script(&settings));
+                                let _ = window.eval(update_script(&settings));
                             }
                         }
                     }
