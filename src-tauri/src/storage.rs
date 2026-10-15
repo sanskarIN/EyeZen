@@ -84,7 +84,9 @@ pub fn recover(path: &Path) -> Result<EyeZenState, String> {
             if !path.exists() {
                 return Err(error);
             }
-            let timestamp = chrono::Utc::now().timestamp_nanos_opt().ok_or("Invalid backup timestamp")?;
+            let timestamp = chrono::Utc::now()
+                .timestamp_nanos_opt()
+                .ok_or("Invalid backup timestamp")?;
             let corrupt = path.with_extension(format!("corrupt-{timestamp}.json"));
             fs::rename(path, corrupt).map_err(|e| format!("{error}; backup failed: {e}"))?;
             let state = EyeZenState::default();

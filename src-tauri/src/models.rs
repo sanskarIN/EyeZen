@@ -123,8 +123,16 @@ impl Default for EyeZenState {
 fn supported_theme(name: &str) -> bool {
     matches!(
         name,
-        "light" | "dark" | "system" | "warmDark" | "warmLight" | "sepia"
-            | "midnight" | "amoled" | "highContrast" | "grayscale"
+        "light"
+            | "dark"
+            | "system"
+            | "warmDark"
+            | "warmLight"
+            | "sepia"
+            | "midnight"
+            | "amoled"
+            | "highContrast"
+            | "grayscale"
     )
 }
 
