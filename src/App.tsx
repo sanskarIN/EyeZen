@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
   Activity, Accessibility, Bell, BookOpen, Check, ChevronRight, Clock3, Code2,
   Download, Eye, Focus, Gauge, Heart, Info, Keyboard, Laptop, LayoutDashboard,
@@ -195,7 +195,6 @@ export default function App() {
     const timer = window.setInterval(tick, 60_000);
     return () => { alive = false; window.clearInterval(timer); };
     // Profile application is guarded by current dependencies; save effects handle persistence.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.activeProfileId, data?.manualOverride, data?.schedules, data?.profiles]);
 
   useEffect(() => {
