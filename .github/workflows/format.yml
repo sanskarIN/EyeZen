@@ -2,7 +2,7 @@ name: Normalize Rust formatting on release branch
 
 on:
   push:
-    branches: [release-1.1.1]
+    branches: [release-1.2.0]
     paths:
       - 'src-tauri/src/**/*.rs'
       - 'src-tauri/build.rs'
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: eyezen-1.1.1-format
+  group: eyezen-1.2.0-format
   cancel-in-progress: true
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: release-1.1.1
+          ref: release-1.2.0
           persist-credentials: true
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -41,4 +41,4 @@ jobs:
           git config user.email 'sanskarin@outlook.in'
           git add src-tauri
           git commit -m 'style(rust): apply cargo fmt for release candidate'
-          git push origin HEAD:release-1.1.1
+          git push origin HEAD:release-1.2.0

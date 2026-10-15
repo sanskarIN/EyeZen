@@ -1,3 +1,37 @@
+# EyeZen v1.2.0 — Web and public documentation release
+
+**Branch:** `release-1.2.0` · **PR:** https://github.com/sanskarIN/EyeZen/pull/7  
+**Work completed:** local-first browser preferences, documentation website, browser-compatible notification opt-in, Pages build/deploy workflow, cross-platform release packaging workflow and test coverage.  
+**Remaining publishing dependency:** GitHub Pages must be enabled under repository Settings → Pages → Source → GitHub Actions by an authenticated maintainer. A committed workflow alone does not make Pages live.
+
+## Functionality and implementation
+1. `src/services/web-storage.ts`: validated JSON persistence in browser `localStorage`, using the namespaced `eyezen.web.settings.v1` key to avoid accidental cross-project collisions. Version/schema and size limits are enforced; invalid data is not automatically overwritten.
+2. `src/services/web-storage.test.ts`: regression coverage for first visit, settings round-trip, corrupt records, storage exceptions, invalid schema, upload safety and separate storage contexts.
+3. `src/services/native.ts`: browser state persistence; opt-in standard browser notification API; explicit native-feature limitations.
+4. `src/App.tsx`: browser edition messaging, correct settings location, documentation links, desktop-only features distinguished from browser support, v1.2.0 About panel.
+5. `src/vite-env.d.ts`: typed Vite BASE_URL access to avoid link errors when building for `/EyeZen/`.
+6. `public/docs/index.html`: responsive, accessible HTML documentation with feature cards, complete platform comparison matrix, install guide, privacy, architecture and FAQ.
+7. `docs/web-edition.md`, `docs/feature-matrix.md`, `docs/release-notes-v1.2.0.md`, `docs/release-checklist-v1.2.0.md`: living feature support and release acceptance docs.
+8. `.github/workflows/pages.yml`: verifies frontend and builds `dist/` with `--base=/EyeZen/`, asserts docs output and publishes via GitHub Pages environment.
+9. `.github/workflows/release.yml`: v1.2.0 gated Windows/macOS/Linux package release with hashes; `.github/workflows/lockfiles.yml` and `format.yml` updated for new release branch.
+10. Updated npm, Cargo and Tauri application version metadata/lockfiles to 1.2.0.
+
+## Privacy and accurate limitations
+- The web edition is a client-side app; no cloud account or application-level telemetry. GitHub Pages infrastructure may log site requests.
+- `localStorage` is **origin-scoped**, not path-isolated; other apps hosted on `sanskarin.github.io` share the origin. A namespaced key prevents ordinary collisions, not malicious same-origin scripts. Do not save secrets.
+- Web app themes only color EyeZen itself; desktop-wide tint is available only in supported installed desktop sessions. Physical backlight/HDR/ICC/Night Light are not controlled by either edition.
+- Background reminders are limited by whether the app/tab is active and by browser/OS notification permission and scheduling.
+- On real devices, cross-monitor overlay positioning, cursor pass-through and compositor compatibility remain to be manually accepted.
+- No unsupported medical or eye-disease claims.
+
+## Publication steps
+1. Run all checks and merge PR #7 only if successful.
+2. Publish v1.2.0 desktop installer assets and SHA256SUMS via gated GitHub Actions.
+3. Enable GitHub Pages Source → GitHub Actions as repository owner and confirm app and docs sites have a successful Pages workflow run.
+4. Keep documentation truthful if Pages is not enabled yet.
+
+---
+
 # EyeZen v1.1.1 — Desktop-wide comfort implementation
 
 **Goal:** Address the concrete v1.1.0 bug: saved `warmth` and `intensity` values did not change what the user saw on other desktop applications or secondary monitors.
