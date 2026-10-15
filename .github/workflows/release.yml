@@ -1,6 +1,10 @@
 name: Publish EyeZen v1.1.0
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/release-notes-v1.1.0.md'
   workflow_dispatch:
     inputs:
       confirm_release:
@@ -17,7 +21,7 @@ permissions:
 
 jobs:
   verify:
-    if: github.ref == 'refs/heads/main' && github.event.inputs.confirm_release == 'PUBLISH'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event.inputs.confirm_release == 'PUBLISH')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
