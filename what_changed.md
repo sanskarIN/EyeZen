@@ -48,7 +48,8 @@ This file is the detailed development handoff requested in place of long chat up
 - Linux, Windows and macOS CI matrix configured
 - Frontend lint, typecheck, tests, and production build **passed** on an early CI run; subsequent runs also passed the frontend job on the new test commit.
 - Rust formatting initially failed due to generated source layout. An automatic Rustfmt workflow was added, formatted files were committed to the release branch, and subsequent macOS Rust formatting step passed.
-- Rust Clippy/build and packaging checks were still in progress at the time this note was written. Recheck the latest CI run before reporting success.
+- The first Rust Clippy run identified two lints (unnecessary explicit lifetimes and default state field reassignments). Both source issues have been corrected with dedicated commits; newer Rust CI jobs are being rerun.
+- The branch received further cargo fmt changes through GitHub Actions. Recheck the latest CI run before reporting full success.
 
 ## Intentional boundaries (not hidden bugs)
 
@@ -71,6 +72,11 @@ Import/export currently uses frontend JSON file input/download and backend valid
 - README.md, CHANGELOG.md, CONTRIBUTING.md, SECURITY.md
 - docs/architecture.md, docs/platform-support.md, docs/privacy.md, docs/testing.md, docs/release-checklist.md
 - LICENSE (preexisting MPL-2.0)
+
+## GitHub pull request
+
+- Draft review: https://github.com/sanskarIN/EyeZen/pull/1
+- Draft status is intentional until full CI, hardware, installation and accessibility release gates pass.
 
 ## Known issues / follow-up engineering priorities
 
