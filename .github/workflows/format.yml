@@ -1,0 +1,44 @@
+name: Normalize Rust formatting on release branch
+
+on:
+  push:
+    branches: [release-1.0.0]
+    paths:
+      - 'src-tauri/src/**/*.rs'
+      - 'src-tauri/build.rs'
+      - '.github/workflows/format.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: eyezen-release-format
+  cancel-in-progress: true
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release-1.0.0
+          persist-credentials: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Format Rust source
+        working-directory: src-tauri
+        run: cargo fmt --all
+      - name: Commit formatting if needed
+        shell: bash
+        run: |
+          if git diff --quiet -- src-tauri; then
+            echo 'Rust formatting already clean'
+            exit 0
+          fi
+          git config user.name 'Sanskar'
+          git config user.email 'sanskarin@outlook.in'
+          git add src-tauri
+          git commit -m 'style(rust): apply cargo fmt for release candidate'
+          git push origin HEAD:release-1.0.0
