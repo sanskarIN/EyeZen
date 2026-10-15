@@ -50,7 +50,13 @@ function validBreaks(b: unknown) {
 }
 export function parseProfile(value: unknown): ComfortProfile {
   if (!value || typeof value !== "object") throw Error("The file is not a profile.");
-  const raw = value as Partial<ComfortProfile>;
+  const object = value as Record<string, unknown>;
+  const wrapped = "schemaVersion" in object || "kind" in object || "profile" in object;
+  if (wrapped && (object.schemaVersion !== 1 || object.kind !== "eyezen-profile")) {
+    throw Error("Unsupported EyeZen profile export version or format.");
+  }
+  const raw = (wrapped ? object.profile : value) as Partial<ComfortProfile>;
+  if (!raw || typeof raw !== "object") throw Error("The file does not contain a valid profile.");
   if (typeof raw.name !== "string" || !raw.name.trim() || raw.name.length > 80 ||
     typeof raw.theme !== "string" || !themes.some(t => t.id === raw.theme) ||
     !validComfort(raw.comfort) || !validBreaks(raw.breaks)) {
