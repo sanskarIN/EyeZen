@@ -18,4 +18,4 @@
 - [ ] Release packages signed/published or explicitly labeled as unsigned
 - [ ] Final stable v1.0.0 tag created after all required checks
 
-**Not stable yet.** A release candidate is a work-in-progress, not a replacement for these gates.
+The automated release pipeline may publish unsigned bundles only after successful build, lint, and unit-test jobs. Manual OS installation, accessibility, hardware, suspend/resume, and signing gates are separately tracked and must not be described as complete without evidence.
