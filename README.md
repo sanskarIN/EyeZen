@@ -4,7 +4,7 @@
 
 EyeZen is a privacy-focused, open-source desktop and browser application for personalizing an on-screen workspace. It combines an expressive theme system, comfort preferences, workspace profiles, schedules, configurable break reminders, and accessibility settings.
 
-> **Latest stable:** [EyeZen v1.1.1](https://github.com/sanskarIN/EyeZen/releases/tag/v1.1.1). **v1.2.0 in development:** a persistent browser web edition and public GitHub Pages documentation. After deployment: [EyeZen Web](https://sanskarin.github.io/EyeZen/) · [Features and docs](https://sanskarin.github.io/EyeZen/docs/). Availability is verified through the Pages deployment workflow.
+> **Latest stable:** [EyeZen v1.2.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.0), officially released with Windows, macOS and Linux installers. The GitHub Pages web app and documentation are built, but repository Pages must be enabled under Settings → Pages → Source → GitHub Actions before the URLs become live.
 
 ## Overview
 
