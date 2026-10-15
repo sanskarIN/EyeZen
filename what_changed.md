@@ -1,7 +1,9 @@
 # EyeZen v1.2.0 — Web and public documentation release
 
 **Branch:** `release-1.2.0` · **PR:** https://github.com/sanskarIN/EyeZen/pull/7  
-**Work completed:** local-first browser preferences, documentation website, browser-compatible notification opt-in, Pages build/deploy workflow, cross-platform release packaging workflow and test coverage.  
+**Official v1.2.0 released:** https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.0  
+**Release workflow:** https://github.com/sanskarIN/EyeZen/actions/runs/38707631189 — all jobs passed, attached MSI, DMG, DEB, RPM and SHA256SUMS.txt.  
+**GitHub Pages build:** https://github.com/sanskarIN/EyeZen/actions/runs/38707631171 — build passed, deploy failed as repository Pages source is not enabled.  
 **Remaining publishing dependency:** GitHub Pages must be enabled under repository Settings → Pages → Source → GitHub Actions by an authenticated maintainer. A committed workflow alone does not make Pages live.
 
 ## Functionality and implementation
