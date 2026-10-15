@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint .",
-    "tauri": "tauri",
+    "tauri": "npm run icons && tauri",
     "icons": "tauri icon src-tauri/icons/app-icon.svg"
   },
   "dependencies": {
