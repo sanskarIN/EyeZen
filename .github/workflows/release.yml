@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
@@ -63,17 +63,17 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri -> target
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npm run icons
       - name: Rust format
         working-directory: src-tauri
         run: cargo fmt --all -- --check
       - name: Rust lint
         working-directory: src-tauri
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --locked --all-targets -- -D warnings
       - name: Rust tests
         working-directory: src-tauri
-        run: cargo test
+        run: cargo test --locked
       - run: npm run build
       - name: Build unsigned installers
         run: npx tauri build --bundles ${{ matrix.target }}
