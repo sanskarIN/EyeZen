@@ -258,7 +258,7 @@ export default function App() {
       <div className="sidebar-bottom">
         <div className="sidebar-pill"><span className="online-dot"/><span>{desktop ? "LOCAL DESKTOP APP" : "BROWSER PREVIEW"}</span></div>
         <div className="side-help"><Heart size={17}/> Small steps, more comfort.</div>
-        <span className="version-label">EyeZen v1.0.0-rc.1</span>
+        <span className="version-label">EyeZen v1.0.0</span>
       </div>
     </aside>
 
