@@ -214,8 +214,10 @@ mod tests {
     }
     #[test]
     fn rejects_dangling_profiles() {
-        let mut state = EyeZenState::default();
-        state.active_profile_id = "missing".into();
+        let state = EyeZenState {
+            active_profile_id: "missing".into(),
+            ..EyeZenState::default()
+        };
         assert!(state.validate().is_err());
     }
     #[test]
