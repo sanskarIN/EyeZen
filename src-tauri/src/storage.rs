@@ -17,6 +17,10 @@ pub fn load(path: &Path) -> Result<EyeZenState, String> {
     if !path.exists() {
         return Ok(EyeZenState::default());
     }
+    let metadata = fs::metadata(path).map_err(|e| format!("Cannot inspect settings: {e}"))?;
+    if metadata.len() > 128_000 {
+        return Err("Settings file exceeds the 128 KB safety limit".into());
+    }
     let bytes = fs::read(path).map_err(|e| format!("Cannot read settings: {e}"))?;
     let state: EyeZenState =
         serde_json::from_slice(&bytes).map_err(|e| format!("Invalid settings file: {e}"))?;
@@ -64,13 +68,25 @@ pub fn save(path: &Path, state: &EyeZenState) -> Result<(), String> {
 }
 
 pub fn recover(path: &Path) -> Result<EyeZenState, String> {
+    // After interrupted Windows replacement, the last committed settings may
+    // survive as settings.json.previous while settings.json is absent.
+    if !path.exists() {
+        let previous = path.with_extension("json.previous");
+        if previous.exists() {
+            let original = load(&previous)?;
+            save(path, &original)?;
+            return Ok(original);
+        }
+    }
     match load(path) {
         Ok(state) => Ok(state),
         Err(error) => {
             if !path.exists() {
                 return Err(error);
             }
-            let timestamp = chrono::Utc::now().timestamp();
+            let timestamp = chrono::Utc::now()
+                .timestamp_nanos_opt()
+                .ok_or("Invalid backup timestamp")?;
             let corrupt = path.with_extension(format!("corrupt-{timestamp}.json"));
             fs::rename(path, corrupt).map_err(|e| format!("{error}; backup failed: {e}"))?;
             let state = EyeZenState::default();
@@ -83,6 +99,23 @@ pub fn recover(path: &Path) -> Result<EyeZenState, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn recovers_previous_settings_after_interrupted_replace() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let previous = path.with_extension("json.previous");
+        let state = EyeZenState::default();
+        fs::write(&previous, serde_json::to_vec(&state).unwrap()).unwrap();
+        assert_eq!(recover(&path).unwrap(), state);
+        assert!(path.exists());
+    }
+    #[test]
+    fn oversize_data_is_not_loaded() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        fs::write(&path, vec![b'x'; 128_001]).unwrap();
+        assert!(load(&path).is_err());
+    }
     #[test]
     fn save_load_and_recover() {
         let dir = tempfile::tempdir().unwrap();

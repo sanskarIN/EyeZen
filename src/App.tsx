@@ -11,8 +11,11 @@ import type { ComfortProfile, EyeZenState, PlatformReport, ScheduleRule } from "
 import { createDefaults, newBreaks, newComfort, themes } from "./defaults";
 import { activeSchedule, desktop, loadState, notifyBreak, platformReport, requestDisplayAdjustment, saveState } from "./services/native";
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
-import { isQuiet, validTime } from "./services/schedule";
+import { validTime } from "./services/schedule";
+import { evaluateBreak } from "./services/reminders";
 import { Empty, Panel, Range, Status, Toggle } from "./components/ui";
+import { ProfileNameField } from "./components/ProfileNameField";
+import { activateProfile, removeProfile } from "./services/profiles";
 
 const navigation = [
   { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
@@ -57,6 +60,8 @@ export default function App() {
   const [shortcutActive, setShortcutActive] = useState(false);
   const [breakPaused, setBreakPaused] = useState(false);
   const [sessionBreaks, setSessionBreaks] = useState(0);
+  const [breakDue, setBreakDue] = useState(false);
+  const [pauseRemaining, setPauseRemaining] = useState(0);
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const lastBreakAt = useRef(Date.now());
   const skipFirstSave = useRef(true);
@@ -112,15 +117,7 @@ export default function App() {
   }
   function patch(partial: Partial<EyeZenState>) { change(s => ({ ...s, ...partial })); }
   function applyProfile(id: string, manual = true) {
-    change(s => {
-      const profile = s.profiles.find(p => p.id === id);
-      if (!profile) return s;
-      return {
-        ...s, activeProfileId: id, theme: profile.theme,
-        comfort: { ...profile.comfort }, breaks: { ...profile.breaks },
-        manualOverride: manual
-      };
-    });
+    change(s => activateProfile(s, id, manual));
     setSelectedProfile(id);
     setNotification("Profile applied. Unsupported display controls were not changed.");
   }
@@ -139,11 +136,7 @@ export default function App() {
   function deleteProfile(id: string) {
     if (!data || data.profiles.length < 2) { setNotification("Keep at least one profile."); return; }
     if (!window.confirm("Delete this profile and its associated schedules?")) return;
-    change(s => {
-      const remaining = s.profiles.filter(p => p.id !== id);
-      return { ...s, profiles: remaining, activeProfileId: s.activeProfileId === id ? remaining[0].id : s.activeProfileId,
-        schedules: s.schedules.filter(r => r.profileId !== id) };
-    });
+    change(s => removeProfile(s, id));
     setSelectedProfile(data.profiles.find(p => p.id !== id)?.id ?? "");
   }
   function addSchedule() {
@@ -198,18 +191,36 @@ export default function App() {
   }, [data?.activeProfileId, data?.manualOverride, data?.schedules, data?.profiles]);
 
   useEffect(() => {
-    if (!data?.breaks.enabled || breakPaused) { lastBreakAt.current = Date.now(); return; }
-    const timer = window.setInterval(() => {
-      const now = Date.now();
-      if (now - lastBreakAt.current < data.breaks.intervalMinutes * 60_000) return;
-      lastBreakAt.current = now;
-      if (isQuiet(data.breaks.quietStart, data.breaks.quietEnd)) return;
+    if (!data?.breaks.enabled || breakPaused) {
+      lastBreakAt.current = Date.now();
+      return;
+    }
+    const tick = () => {
+      const result = evaluateBreak(lastBreakAt.current, data.breaks, new Date(), pauseRemaining > 0);
+      lastBreakAt.current = result.anchor;
+      if (!result.due) return;
       setSessionBreaks(count => count + 1);
-      setNotification("A gentle reminder: consider taking a screen break.");
-      void notifyBreak().catch(() => setNotification("Break due. System notification unavailable."));
-    }, 10_000);
-    return () => window.clearInterval(timer);
-  }, [data?.breaks, breakPaused]);
+      setBreakDue(true);
+      void notifyBreak().catch(() => {
+        setNotification("Break due. System notification unavailable.");
+      });
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") tick(); };
+    const timer = window.setInterval(tick, 10_000);
+    window.addEventListener("focus", tick);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", tick);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [data?.breaks, breakPaused, pauseRemaining > 0]);
+
+  useEffect(() => {
+    if (pauseRemaining <= 0) return;
+    const timer = window.setTimeout(() => setPauseRemaining(seconds => Math.max(0, seconds - 1)), 1_000);
+    return () => window.clearTimeout(timer);
+  }, [pauseRemaining]);
 
   if (loadError) return <main className="fatal">
     <Shield size={38} /><h1>Unable to open EyeZen settings</h1><p>{loadError}</p>
@@ -258,7 +269,7 @@ export default function App() {
       <div className="sidebar-bottom">
         <div className="sidebar-pill"><span className="online-dot"/><span>{desktop ? "LOCAL DESKTOP APP" : "BROWSER PREVIEW"}</span></div>
         <div className="side-help"><Heart size={17}/> Small steps, more comfort.</div>
-        <span className="version-label">EyeZen v1.0.0</span>
+        <span className="version-label">EyeZen v1.1.0</span>
       </div>
     </aside>
 
@@ -278,6 +289,25 @@ export default function App() {
           Browser preview: settings are temporary and cannot control your displays. Open the Tauri desktop application to save locally.</div>}
         {notification && <div className="alert message-alert" role="status"><Info size={18}/><span>{notification}</span>
           <button onClick={() => setNotification("")} aria-label="Dismiss message">Dismiss</button></div>}
+        {breakDue && <div className="alert info-alert reminder-banner" role="status">
+          <Eye size={19}/><span>Time for an optional screen pause. Your reminder suggests {data.breaks.durationSeconds} seconds.</span>
+          <button className="secondary-btn" onClick={() => {
+            setBreakDue(false);
+            setPauseRemaining(data.breaks.durationSeconds);
+            lastBreakAt.current = Date.now();
+          }}>Start pause</button>
+          <button className="secondary-btn" onClick={() => {
+            setBreakDue(false);
+            lastBreakAt.current = Date.now();
+          }}>Dismiss</button>
+        </div>}
+        {pauseRemaining > 0 && <div className="alert info-alert reminder-banner" role="status">
+          <Clock3 size={19}/><span>Optional screen pause · {pauseRemaining} seconds remaining</span>
+          <button className="secondary-btn" onClick={() => {
+            setPauseRemaining(0);
+            lastBreakAt.current = Date.now();
+          }}>Finish early</button>
+        </div>}
 
         {screen === "dashboard" && <>
           <div className="hero-card">
@@ -381,8 +411,8 @@ export default function App() {
           </Panel>
           {selected && <Panel title="Edit profile" description="Changes are saved automatically on this device." className="editor-panel">
             <div className="form-grid">
-              <label className="input-label">Profile name<input type="text" maxLength={80} value={selected.name}
-                onChange={e => changeProfile(selected.id, p => ({ ...p, name: e.target.value }))}/></label>
+              <ProfileNameField id={selected.id} name={selected.name}
+                onSave={name => changeProfile(selected.id, p => ({ ...p, name }))} />
               <label className="input-label">Application theme<select value={selected.theme}
                 onChange={e => changeProfile(selected.id, p => ({ ...p, theme: e.target.value }))}>
                 {themes.map(t => <option value={t.id} key={t.id}>{t.name}</option>)}</select></label>
@@ -392,8 +422,14 @@ export default function App() {
               onChange={enabled => changeProfile(selected.id, p => ({ ...p, comfort: { ...p.comfort, enabled } }))}/>
             <Range title="Warmth preference" min={0} max={100} value={selected.comfort.warmth} suffix="%"
               onChange={warmth => changeProfile(selected.id, p => ({ ...p, comfort: { ...p.comfort, warmth } }))}/>
+            <Range title="Intensity preference" min={0} max={100} value={selected.comfort.intensity} suffix="%"
+              onChange={intensity => changeProfile(selected.id, p => ({ ...p, comfort: { ...p.comfort, intensity } }))}/>
             <Toggle label="Break reminders for this profile" checked={selected.breaks.enabled}
               onChange={enabled => changeProfile(selected.id, p => ({ ...p, breaks: { ...p.breaks, enabled } }))}/>
+            <Range title="Break interval" min={5} max={240} step={5} value={selected.breaks.intervalMinutes} suffix=" min"
+              onChange={intervalMinutes => changeProfile(selected.id, p => ({ ...p, breaks: { ...p.breaks, intervalMinutes } }))}/>
+            <Range title="Suggested pause" min={10} max={600} step={10} value={selected.breaks.durationSeconds} suffix=" sec"
+              onChange={durationSeconds => changeProfile(selected.id, p => ({ ...p, breaks: { ...p.breaks, durationSeconds } }))}/>
             <div className="button-row">
               <button className="primary-btn" onClick={() => applyProfile(selected.id)}><Check size={16}/> Apply profile</button>
               <button className="secondary-btn" onClick={() => exportJson({ schemaVersion: 1, kind: "eyezen-profile", profile: selected }, "eyezen-profile.json")}><Download size={16}/> Export</button>
@@ -422,9 +458,23 @@ export default function App() {
                 onChange={e => updateRule(rule.id, r => ({ ...r, profileId: e.target.value }))}>
                 {data.profiles.map(p => <option value={p.id} key={p.id}>{p.name}</option>)}</select></label>
               <label className="input-label">Starts<input type="time" value={rule.start}
-                onChange={e => { if (validTime(e.target.value)) updateRule(rule.id, r => ({ ...r, start: e.target.value })); }}/></label>
+                onChange={e => {
+                  if (!validTime(e.target.value)) return;
+                  if (e.target.value === rule.end) {
+                    setNotification("Schedule start and end must be different.");
+                    return;
+                  }
+                  updateRule(rule.id, r => ({ ...r, start: e.target.value }));
+                }}/></label>
               <label className="input-label">Ends<input type="time" value={rule.end}
-                onChange={e => { if (validTime(e.target.value)) updateRule(rule.id, r => ({ ...r, end: e.target.value })); }}/></label>
+                onChange={e => {
+                  if (!validTime(e.target.value)) return;
+                  if (e.target.value === rule.start) {
+                    setNotification("Schedule start and end must be different.");
+                    return;
+                  }
+                  updateRule(rule.id, r => ({ ...r, end: e.target.value }));
+                }}/></label>
             </div>
             <div className="day-picker" aria-label="Schedule weekdays">{weekdays.map((day, number) =>
               <button key={day} className={rule.weekdays.includes(number) ? "picked" : ""}
@@ -441,11 +491,15 @@ export default function App() {
         {screen === "breaks" && <div className="two-col">
           <Panel title="Gentle reminders" description="Flexible, optional reminders with quiet hours.">
             <Toggle label="Enable reminders" checked={data.breaks.enabled}
-              onChange={enabled => { patch({ breaks: { ...data.breaks, enabled } }); lastBreakAt.current = Date.now(); }}
+              onChange={enabled => {
+                patch({ breaks: { ...data.breaks, enabled } });
+                lastBreakAt.current = Date.now();
+                if (!enabled) { setBreakDue(false); setPauseRemaining(0); }
+              }}
               description="No webcam, activity tracking, or usage history."/>
-            <Range title="Interval" value={data.breaks.intervalMinutes} min={5} max={120} step={5} suffix=" min"
+            <Range title="Interval" value={data.breaks.intervalMinutes} min={5} max={240} step={5} suffix=" min"
               onChange={intervalMinutes => patch({ breaks: { ...data.breaks, intervalMinutes } })}/>
-            <Range title="Suggested pause" value={data.breaks.durationSeconds} min={10} max={120} step={10} suffix=" sec"
+            <Range title="Suggested pause" value={data.breaks.durationSeconds} min={10} max={600} step={10} suffix=" sec"
               onChange={durationSeconds => patch({ breaks: { ...data.breaks, durationSeconds } })}/>
             <div className="form-grid">
               <label className="input-label">Quiet from<input type="time" value={data.breaks.quietStart}
@@ -454,7 +508,12 @@ export default function App() {
                 onChange={e => { if (validTime(e.target.value)) patch({ breaks: { ...data.breaks, quietEnd: e.target.value } }); }}/></label>
             </div>
             <div className="button-row">
-              <button className="secondary-btn" onClick={() => { setBreakPaused(!breakPaused); lastBreakAt.current = Date.now(); }}>
+              <button className="secondary-btn" onClick={() => {
+                setBreakPaused(!breakPaused);
+                setBreakDue(false);
+                setPauseRemaining(0);
+                lastBreakAt.current = Date.now();
+              }}>
                 {breakPaused ? <Play size={16}/> : <Pause size={16}/>} {breakPaused ? "Resume" : "Pause"} reminders
               </button>
               <button className="secondary-btn" onClick={() => void previewReminder()}><Bell size={16}/> Test notification</button>
@@ -524,7 +583,7 @@ export default function App() {
         </div>}
 
         {screen === "about" && <div className="two-col">
-          <Panel title="EyeZen · Version 1.0.0" description="Your screen. Your comfort. Your environment.">
+          <Panel title="EyeZen · Version 1.1.0" description="Your screen. Your comfort. Your environment.">
             <div className="about-mark"><Eye size={58}/></div>
             <p className="readable">EyeZen is a local-first, cross-platform desktop workspace utility built with Rust, Tauri 2, React, and TypeScript.</p>
             <p className="readable">It helps you personalize the EyeZen interface, save comfort preferences, create profiles, and configure gentle reminders without cloud accounts or analytics.</p>

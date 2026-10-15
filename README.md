@@ -4,7 +4,7 @@
 
 EyeZen is a privacy-focused, open-source desktop application for personalizing an on-screen workspace. It combines an expressive theme system, comfort preferences, workspace profiles, schedules, configurable break reminders, and accessibility settings.
 
-> **v1.0.0 release preparation.** Signed installers and hardware control are not provided. Installation packages are published only after Windows, macOS, and Linux CI build gates pass. Check [Releases](https://github.com/sanskarIN/EyeZen/releases) for actual downloads.
+> **Stable:** [v1.0.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.0.0). **In development:** [v1.1.0 on release-1.1.0](https://github.com/sanskarIN/EyeZen/tree/release-1.1.0). The 1.1.0 tag/installers are not published until review and a manually approved release workflow succeed.
 
 ## Overview
 
@@ -52,7 +52,7 @@ See [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for current
 ~~~sh
 git clone https://github.com/sanskarIN/EyeZen.git
 cd EyeZen
-git checkout release-1.0.0
+git checkout release-1.1.0
 npm install
 npm run icons
 npm run tauri dev
@@ -92,7 +92,7 @@ Read [docs/architecture.md](docs/architecture.md), [docs/platform-support.md](do
 ## Roadmap
 
 1. **v1.0.0:** initial tested core, explicit platform limitations, unsigned packaging through automated checks.
-2. **v1.1.x:** background scheduler, broader shortcut/tray controls, robust sleep/wake handling, offline-integrated theme/profile studio.
+2. **v1.1.0:** profile/settings reliability, improved wake checks for reminders, optional timed pause; native background scheduling remains future work.
 3. **v1.2.x+:** vetted per-platform display adapters, multi-monitor enumeration, hardware brightness where supported; zero fabricated successes.
 4. **Future:** better theme composition, focus routines, color-accurate workflow safeguards, signed installers and community translations.
 

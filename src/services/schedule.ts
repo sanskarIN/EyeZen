@@ -15,7 +15,7 @@ export function matchingRule(rules: ScheduleRule[], now: Date): ScheduleRule | u
     if (start < end) return rule.weekdays.includes(today) && time >= start && time < end;
     return (rule.weekdays.includes(today) && time >= start) ||
       (rule.weekdays.includes(yesterday) && time < end);
-  }).sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))[0];
+  }).sort((a, b) => b.priority - a.priority || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0];
 }
 export function isQuiet(start: string, end: string, now = new Date()): boolean {
   const a = minutes(start), b = minutes(end);
