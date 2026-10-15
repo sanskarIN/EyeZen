@@ -116,10 +116,10 @@ jobs:
           fi
           (
             cd artifacts
-            find . -type f \\( -name '*.msi' -o -name '*.dmg' -o -name '*.deb' -o -name '*.rpm' \\) -print0 |
+            find . -type f \( -name '*.msi' -o -name '*.dmg' -o -name '*.deb' -o -name '*.rpm' \) -print0 |
               sort -z | xargs -0 -r sha256sum > SHA256SUMS.txt
           )
-          gh release create v1.1.0 "${installers[@]}" artifacts/SHA256SUMS.txt \\
+          gh release create v1.1.0 "${installers[@]}" artifacts/SHA256SUMS.txt \
             --target "${GITHUB_SHA}" \
             --title "EyeZen v1.1.0" \
             --notes-file docs/release-notes-v1.1.0.md \
