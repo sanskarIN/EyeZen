@@ -98,6 +98,19 @@ export default function App() {
       .catch(error => setNotification("Could not save settings: " + String(error)));
   }, [data, hasLoaded]);
 
+  useEffect(() => {
+    if (!desktop) return;
+    const onEmergencyOff = () => {
+      change(current => ({ ...current, comfort: { ...current.comfort, enabled: false } }));
+      setOverlayStatus({
+        status: "disabled", displayCount: 0,
+        message: "Screen comfort disabled from the EyeZen tray. All tint windows removed.",
+      });
+    };
+    window.addEventListener("eyezen:comfort-off", onEmergencyOff);
+    return () => window.removeEventListener("eyezen:comfort-off", onEmergencyOff);
+  }, []);
+
   // Keep every detected monitor in sync with the applied profile, including
   // restored settings after relaunch. Native overlays never intercept input.
   function syncDesktopComfort(settings: EyeZenState["comfort"]) {
