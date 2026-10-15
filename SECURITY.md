@@ -2,7 +2,7 @@
 
 ## Supported releases
 
-EyeZen v1.0.0 is a development release candidate. No stable version has been published or security-supported yet.
+EyeZen v1.0.0 is the initial desktop release. There is not yet a published security-support or long-term-support guarantee.
 
 ## Reporting vulnerabilities
 
