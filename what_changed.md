@@ -4,7 +4,12 @@
 
 **Branch:** `release-1.1.1`  
 **PR:** https://github.com/sanskarIN/EyeZen/pull/6  
-**Status:** Native overlay implementation and test/release preparation; automated and physical-device verification gates are tracked separately.
+**Status:** v1.1.1 OFFICIALLY PUBLISHED 2026-10-15. Full frontend and Windows/macOS/Linux native+installer CI passed. Real physical multi-monitor testing remains unverified; automated tests do not prove every compositor or device works.
+
+**Stable release:** https://github.com/sanskarIN/EyeZen/releases/tag/v1.1.1  
+**Successful release workflow:** https://github.com/sanskarIN/EyeZen/actions/runs/38683918824  
+**Release assets:** Windows x64 MSI, macOS aarch64 DMG, Linux amd64 DEB, Linux x86_64 RPM, SHA256SUMS.txt  
+**Source merge:** PR #6 → main, merge `1ab99aeafef57f2cacd3872ce29a1416aeaf92c2`
 
 ## Root cause and fix
 
