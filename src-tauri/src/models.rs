@@ -120,6 +120,14 @@ impl Default for EyeZenState {
     }
 }
 
+fn supported_theme(name: &str) -> bool {
+    matches!(
+        name,
+        "light" | "dark" | "system" | "warmDark" | "warmLight" | "sepia"
+            | "midnight" | "amoled" | "highContrast" | "grayscale"
+    )
+}
+
 fn check_time(value: &str) -> bool {
     chrono::NaiveTime::parse_from_str(value, "%H:%M").is_ok()
 }
@@ -163,16 +171,16 @@ impl EyeZenState {
             if profile.name.trim().is_empty() || profile.name.len() > 80 {
                 return Err("Profile names must be 1–80 characters".into());
             }
-            if profile.theme.len() > 64 {
-                return Err("Theme identifier too long".into());
+            if !supported_theme(&profile.theme) {
+                return Err("Unknown profile theme".into());
             }
             check_breaks(&profile.breaks)?;
         }
         if !ids.contains(self.active_profile_id.as_str()) {
             return Err("Active profile does not exist".into());
         }
-        if self.theme.len() > 64 {
-            return Err("Theme identifier too long".into());
+        if !supported_theme(&self.theme) {
+            return Err("Unknown theme".into());
         }
         if self.comfort.warmth > 100 || self.comfort.intensity > 100 {
             return Err("Comfort values must be 0–100".into());
@@ -194,6 +202,7 @@ impl EyeZenState {
             if rule.weekdays.is_empty()
                 || rule.weekdays.len() > 7
                 || rule.weekdays.iter().any(|d| *d > 6)
+                || rule.weekdays.iter().collect::<HashSet<_>>().len() != rule.weekdays.len()
             {
                 return Err("Choose valid weekdays (Monday = 0)".into());
             }
@@ -230,6 +239,28 @@ mod tests {
     fn rejects_out_of_range_comfort_values() {
         let mut state = EyeZenState::default();
         state.comfort.warmth = 255;
+        assert!(state.validate().is_err());
+    }
+    #[test]
+    fn rejects_unknown_themes() {
+        let state = EyeZenState {
+            theme: "untrusted".into(),
+            ..EyeZenState::default()
+        };
+        assert!(state.validate().is_err());
+    }
+    #[test]
+    fn rejects_duplicate_weekdays() {
+        let mut state = EyeZenState::default();
+        state.schedules.push(ScheduleRule {
+            id: "duplicate-weekdays".into(),
+            profile_id: "reading".into(),
+            weekdays: vec![0, 0],
+            start: "09:00".into(),
+            end: "17:00".into(),
+            priority: 1,
+            enabled: true,
+        });
         assert!(state.validate().is_err());
     }
     #[test]
