@@ -1,8 +1,8 @@
-name: Generate locked dependencies for v1.1.0
+name: Generate locked dependencies for v1.1.1
 
 on:
   push:
-    branches: [release-1.1.0]
+    branches: [release-1.1.1]
     paths:
       - 'package.json'
       - 'src-tauri/Cargo.toml'
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: eyezen-1.1-lockfiles
+  group: eyezen-1.1.1-lockfiles
   cancel-in-progress: true
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: release-1.1.0
+          ref: release-1.1.1
           persist-credentials: true
       - uses: actions/setup-node@v4
         with:
@@ -43,7 +43,7 @@ jobs:
             echo 'Dependencies already locked'
             exit 0
           fi
-          git commit -m 'build(deps): pin npm and Cargo dependency resolution for v1.1.0'
-          git fetch origin release-1.1.0
-          git rebase origin/release-1.1.0
-          git push origin HEAD:release-1.1.0
+          git commit -m 'build(deps): pin npm and Cargo dependency resolution for v1.1.1'
+          git fetch origin release-1.1.1
+          git rebase origin/release-1.1.1
+          git push origin HEAD:release-1.1.1
