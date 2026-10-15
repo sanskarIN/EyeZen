@@ -31,6 +31,7 @@ export interface PlatformReport {
   displays: { id: string; name: string }[];
 }
 export interface OperationResult { status: string; message: string }
+export interface OverlayResult { status: "applied" | "disabled" | "unsupported" | "unavailable"; message: string; displayCount: number }
 export interface ThemePreset {
   id: string; name: string; description: string;
   background: string; surface: string; foreground: string;

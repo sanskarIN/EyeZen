@@ -1,6 +1,6 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
-import type { EyeZenState, OperationResult, PlatformReport, ScheduleRule } from "../types";
+import type { ComfortSettings, EyeZenState, OperationResult, OverlayResult, PlatformReport, ScheduleRule } from "../types";
 import { createDefaults } from "../defaults";
 import { matchingRule } from "../services/schedule";
 
@@ -20,6 +20,10 @@ export async function platformReport(): Promise<PlatformReport> {
     { id: "themes", status: "available", detail: "Theme preview only; not saved to desktop." },
     { id: "profiles", status: "available", detail: "Profile preview only; not saved to desktop." },
   ] };
+}
+export async function applyComfortOverlay(settings: ComfortSettings): Promise<OverlayResult> {
+  if (desktop) return invoke<OverlayResult>("apply_comfort_overlay", { settings });
+  return { status: "unsupported", message: "Browser previews cannot alter other desktop windows.", displayCount: 0 };
 }
 export async function requestDisplayAdjustment(): Promise<OperationResult> {
   return desktop ? invoke<OperationResult>("request_display_adjustment") :

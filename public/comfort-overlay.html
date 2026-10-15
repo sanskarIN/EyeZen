@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>EyeZen screen comfort overlay</title>
+  <style>
+    :root { --warm-alpha: 0; --dim-alpha: 0; color-scheme: light dark; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; pointer-events: none !important; user-select: none; }
+    #warm, #dim { position: fixed; inset: 0; pointer-events: none !important; }
+    #warm { background: rgba(255, 159, 54, var(--warm-alpha)); }
+    #dim { background: rgba(0, 0, 0, var(--dim-alpha)); }
+  </style>
+</head>
+<body aria-hidden="true">
+  <div id="warm"></div>
+  <div id="dim"></div>
+</body>
+</html>

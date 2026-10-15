@@ -2,6 +2,22 @@
 
 All notable release changes will be documented here.
 
+## [Unreleased] — 1.1.1 desktop-wide visual comfort
+
+### Added
+- Opt-in click-through transparent tint windows for each actual enumerated display where supported
+- Color warmth/intensity translated into bounded visual amber tint and dim layers across the desktop
+- Multi-monitor geometry and DPI-aware positions with periodic hotplug refresh while the app is open
+- Screen overlay status separate from real monitor hardware capabilities
+- Emergency "Disable screen comfort" tray action and automatic overlay removal on quit/close
+- Fail-closed behavior when transparent window click-through or placement fails
+
+### Compatibility notes
+- Visual tint is NOT native display color temperature, physical brightness, HDR or ICC adjustment
+- Wayland desktop-wide overlays unavailable; Linux X11 is experimental
+- macOS uses Tauri private transparency API and cannot target the Mac App Store
+- Actual multi-monitor user hardware testing is still required
+
 ## [Unreleased] — 1.1.0 preparation
 
 ### Added
