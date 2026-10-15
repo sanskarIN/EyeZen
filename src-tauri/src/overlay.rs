@@ -1,6 +1,9 @@
 use crate::models::ComfortSettings;
 use serde::Serialize;
-use std::sync::{atomic::{AtomicBool, Ordering}, Mutex};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Mutex,
+};
 use tauri::{
     webview::{PageLoadEvent, WebviewWindowBuilder},
     AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl,
