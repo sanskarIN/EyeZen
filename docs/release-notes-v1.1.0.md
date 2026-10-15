@@ -1,6 +1,6 @@
 # EyeZen v1.1.0 — Reliability and comfort routines
 
-This document is a **draft** for the upcoming EyeZen v1.1.0 release. Publication requires green checks and approval.
+EyeZen v1.1.0 is a local-first desktop application release. The attached installer packages are built and tested by the cross-platform GitHub Actions release workflow. **They are unsigned**, and hardware/assistive-technology acceptance checks are not guaranteed by CI.
 
 ## Changes since 1.0.0
 
@@ -28,9 +28,9 @@ The scheduling and reminder loop runs while the webview process is active, and c
 
 Unsigned desktop packages require platform-specific installation checks, and desktop environments can have different notification/tray/shortcut behavior.
 
-## Delivery
+## Downloads and verification
 
-Planned unsigned builds: Windows x64 MSI, macOS Apple Silicon DMG, and Linux x86_64 DEB/RPM. Real devices and architectures not included in those runners require additional testing. Do not describe untested OS/architectures as supported.
+Unsigned builds: Windows x64 MSI, macOS Apple Silicon DMG, and Linux x86_64 DEB/RPM. Real devices and architectures not included in those runners require additional testing. Do not interpret a CI build as physical-device certification or as proof of compatibility with all OS versions. Installer checksums are included in `SHA256SUMS.txt`.
 
 Source: https://github.com/sanskarIN/EyeZen
 License: Mozilla Public License 2.0 (MPL-2.0).
