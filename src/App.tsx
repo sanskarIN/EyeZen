@@ -7,9 +7,9 @@ import {
   SlidersHorizontal, Sparkles, Sun, Trash2, Upload, WandSparkles
 } from "lucide-react";
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
-import type { ComfortProfile, EyeZenState, PlatformReport, ScheduleRule } from "./types";
+import type { ComfortProfile, EyeZenState, OverlayResult, PlatformReport, ScheduleRule } from "./types";
 import { createDefaults, newBreaks, newComfort, themes } from "./defaults";
-import { activeSchedule, desktop, loadState, notifyBreak, platformReport, requestDisplayAdjustment, saveState } from "./services/native";
+import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, saveState } from "./services/native";
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
 import { validTime } from "./services/schedule";
 import { evaluateBreak } from "./services/reminders";
@@ -52,6 +52,8 @@ function SectionDescription({ children }: { children: ReactNode }) { return <p c
 export default function App() {
   const [data, setData] = useState<EyeZenState | null>(null);
   const [report, setReport] = useState<PlatformReport | null>(null);
+  const [overlayStatus, setOverlayStatus] = useState<OverlayResult | null>(null);
+  const overlayQueue = useRef<Promise<void>>(Promise.resolve());
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [selectedProfile, setSelectedProfile] = useState<string>("productivity");
   const [notification, setNotification] = useState("");
@@ -95,6 +97,30 @@ export default function App() {
     saveQueue.current = saveQueue.current.catch(() => undefined).then(() => saveState(snapshot))
       .catch(error => setNotification("Could not save settings: " + String(error)));
   }, [data, hasLoaded]);
+
+  // Keep every detected monitor in sync with the applied profile, including
+  // restored settings after relaunch. Native overlays never intercept input.
+  function syncDesktopComfort(settings: EyeZenState["comfort"]) {
+    overlayQueue.current = overlayQueue.current.catch(() => undefined).then(async () => {
+      try {
+        setOverlayStatus(await applyComfortOverlay(settings));
+      } catch (error) {
+        setOverlayStatus({ status: "unavailable", message: "Comfort overlay failed: " + String(error), displayCount: 0 });
+      }
+    });
+  }
+  useEffect(() => {
+    if (!desktop || !data || !hasLoaded) return;
+    const id = window.setTimeout(() => syncDesktopComfort(data.comfort), data.comfort.enabled ? 160 : 0);
+    return () => window.clearTimeout(id);
+  }, [hasLoaded, data?.comfort.enabled, data?.comfort.warmth, data?.comfort.intensity]);
+
+  // Refresh screen geometry after display hotplug, resolution or DPI changes.
+  useEffect(() => {
+    if (!desktop || !data?.comfort.enabled) return;
+    const id = window.setInterval(() => syncDesktopComfort(data.comfort), 20_000);
+    return () => window.clearInterval(id);
+  }, [data?.comfort.enabled, data?.comfort.warmth, data?.comfort.intensity]);
 
   const theme = useMemo(() => {
     const name = data?.theme === "system" ? (darkSystem ? "dark" : "light") : data?.theme;
@@ -150,10 +176,15 @@ export default function App() {
   }
   async function checkHardware() {
     try {
-      const result = await requestDisplayAdjustment();
+      const capabilities = await platformReport();
+      setReport(capabilities);
+      if (!data) return;
+      const result = await applyComfortOverlay(data.comfort);
+      setOverlayStatus(result);
       setNotification(result.message);
-    } catch (error) { setNotification("Display operation failed: " + String(error)); }
+    } catch (error) { setNotification("Screen comfort check failed: " + String(error)); }
   }
+
   async function previewReminder() {
     try {
       const sent = await notifyBreak();
@@ -230,7 +261,7 @@ export default function App() {
 
   const active = data.profiles.find(p => p.id === data.activeProfileId);
   const selected = data.profiles.find(p => p.id === selectedProfile) ?? active;
-  const hardwareCap = report.capabilities.find(c => c.id === "colorTemperature");
+  const hardwareCap = report.capabilities.find(c => c.id === "screenOverlay");
   const displayAvailable = hardwareCap?.status === "available";
   const meta = titles[screen];
 
@@ -269,7 +300,7 @@ export default function App() {
       <div className="sidebar-bottom">
         <div className="sidebar-pill"><span className="online-dot"/><span>{desktop ? "LOCAL DESKTOP APP" : "BROWSER PREVIEW"}</span></div>
         <div className="side-help"><Heart size={17}/> Small steps, more comfort.</div>
-        <span className="version-label">EyeZen v1.1.0</span>
+        <span className="version-label">EyeZen v1.1.1</span>
       </div>
     </aside>
 
@@ -325,13 +356,13 @@ export default function App() {
             <div className="stat-card"><div className="stat-icon rose"><Bell size={20}/></div><span>BREAK ASSISTANT</span><strong>{data.breaks.enabled ? breakPaused ? "Paused" : "Enabled" : "Off"}</strong><button onClick={() => setScreen("breaks")}>Manage reminders <ChevronRight size={14}/></button></div>
           </div>
           <div className="two-col">
-            <Panel title="Quick comfort controls" description="Your personal display preferences, saved locally.">
+            <Panel title="Quick comfort controls" description="Opt-in visual tint on all detected monitors where supported.">
               <Toggle label="Comfort preferences" checked={data.comfort.enabled}
-                description={displayAvailable ? "Supported native control" : "Preference only — hardware integration unavailable"}
+                description={displayAvailable ? "Opt-in visual tint across detected screens" : "No supported screen overlay in this session"}
                 onChange={enabled => patch({ comfort: { ...data.comfort, enabled } })}/>
               <Range title="Preferred warmth" value={data.comfort.warmth} min={0} max={100} suffix="%"
                 onChange={warmth => patch({ comfort: { ...data.comfort, warmth } })}/>
-              <div className="inline-note"><Info size={17}/> {displayAvailable ? "See available adjustments in Displays." : "These values do not change the display on this build."}</div>
+              <div className="inline-note"><Info size={17}/> {displayAvailable ? "An overlay changes how your desktop looks; monitor hardware is not modified." : "No desktop-wide tint was applied by this backend."}</div>
             </Panel>
             <Panel title="Ready-to-use profiles" description="Pick a workspace preset in one click.">
               <div className="quick-profiles">{data.profiles.slice(0, 5).map(p => <button key={p.id}
@@ -345,10 +376,10 @@ export default function App() {
         </>}
 
         {screen === "comfort" && <div className="two-col">
-          <Panel title="Display comfort preferences" description="Save desired values without pretending to adjust unsupported hardware.">
-            <Toggle label="Enable comfort preference" checked={data.comfort.enabled}
+          <Panel title="Desktop-wide screen comfort" description="Opt-in visual tint and dimming across detected monitors. Hardware calibration remains untouched.">
+            <Toggle label="Enable screen comfort on all displays" checked={data.comfort.enabled}
               onChange={enabled => patch({ comfort: { ...data.comfort, enabled } })}
-              description="Enabling this saves a preference; actual display changes depend on supported integrations." />
+              description="Uses click-through overlays where supported. Does not change physical brightness or calibrated color temperature." />
             <Range title="Warm color preference" value={data.comfort.warmth} min={0} max={100} suffix="%"
               onChange={warmth => patch({ comfort: { ...data.comfort, warmth } })}/>
             <Range title="Preferred intensity" value={data.comfort.intensity} min={0} max={100} suffix="%"
@@ -360,11 +391,14 @@ export default function App() {
               </button>
             </div>
           </Panel>
-          <Panel title="Hardware integration" description="Backend status from this exact running build.">
+          <Panel title="Screen overlay status" description="Actual backend capabilities, not simulated hardware changes.">
             <Status kind={displayAvailable ? "ok" : "warn"}>{displayAvailable ? "Supported" : "Unavailable"}</Status>
             <p className="readable">{hardwareCap?.detail ?? "No backend information available."}</p>
-            <div className="button-row"><button className="secondary-btn" onClick={() => void checkHardware()}><Activity size={16}/> Check adjustment backend</button></div>
-            <div className="inline-note"><Shield size={17}/> No screen overlay is installed and no native color controls are changed by this version.</div>
+            <div className="button-row"><button className="secondary-btn" onClick={() => void checkHardware()}><Activity size={16}/> Refresh display overlay</button></div>
+            {overlayStatus && <div className="inline-note" role="status">
+              <Info size={17}/><span>{overlayStatus.message}</span>
+            </div>}
+            <div className="inline-note"><Shield size={17}/> Comfort overlay is reversible and should not interfere with mouse input. Some exclusive fullscreen windows and Wayland sessions cannot be overlaid. Monitor calibration stays unchanged.</div>
           </Panel>
         </div>}
 
@@ -531,7 +565,7 @@ export default function App() {
           <Panel title="Detected displays" description="Only actual enumerated displays are shown.">
             {report.displays.length ? report.displays.map(d => <div className="display-row" key={d.id}>
               <Monitor size={20}/><span>{d.name}</span></div>) :
-              <Empty>Display enumeration is not implemented for this build. No display names are fabricated.</Empty>}
+              <Empty>No monitors were enumerated by this operating-system session.</Empty>}
             <button className="secondary-btn" onClick={() => void platformReport().then(setReport).catch(e => setNotification(String(e)))}>
               <RotateCcw size={16}/> Refresh capabilities</button>
           </Panel>
@@ -583,7 +617,7 @@ export default function App() {
         </div>}
 
         {screen === "about" && <div className="two-col">
-          <Panel title="EyeZen · Version 1.1.0" description="Your screen. Your comfort. Your environment.">
+          <Panel title="EyeZen · Version 1.1.1" description="Your screen. Your comfort. Your environment.">
             <div className="about-mark"><Eye size={58}/></div>
             <p className="readable">EyeZen is a local-first, cross-platform desktop workspace utility built with Rust, Tauri 2, React, and TypeScript.</p>
             <p className="readable">It helps you personalize the EyeZen interface, save comfort preferences, create profiles, and configure gentle reminders without cloud accounts or analytics.</p>
@@ -608,7 +642,7 @@ export default function App() {
         <div className="onboard-icon"><Eye size={35}/></div>
         <span className="eyebrow">WELCOME TO YOUR NEW WORKSPACE</span>
         <h2 id="onboard-title">Comfort begins with choice.</h2>
-        <p>Choose an appearance, create flexible routines, and keep your settings on your device. Display hardware control depends on your OS and is not included in this build.</p>
+        <p>Choose an appearance, create flexible routines, and keep your settings on your device. Screen tinting depends on your operating system and remains optional; hardware calibration is not modified.</p>
         <div className="onboard-options"><button onClick={() => patch({ theme: "dark" })} className={data.theme === "dark" ? "picked" : ""}><Moon size={20}/> Dark</button>
           <button onClick={() => patch({ theme: "light" })} className={data.theme === "light" ? "picked" : ""}><Sun size={20}/> Light</button>
           <button onClick={() => patch({ theme: "system" })} className={data.theme === "system" ? "picked" : ""}><Laptop size={20}/> System</button></div>
