@@ -141,7 +141,15 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
         });
     }
 
-    let monitors = app.available_monitors().map_err(|e| e.to_string())?;
+    let monitors = match app.available_monitors() {
+        Ok(monitors) => monitors,
+        Err(error) => {
+            // An enumeration failure can follow a disconnect or session change.
+            // Never leave yesterday's overlays active at stale coordinates.
+            close_overlays(&app);
+            return Err(format!("Cannot enumerate displays: {error}"));
+        }
+    };
     if monitors.is_empty() {
         close_overlays(&app);
         return Ok(OverlayResult {
