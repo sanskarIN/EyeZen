@@ -1,4 +1,7 @@
 import { readFileSync } from "node:fs";
+import { URL } from "node:url";
+import console from "node:console";
+import process from "node:process";
 
 const root = new URL("../", import.meta.url);
 const read = path => readFileSync(new URL(path, root), "utf8");
