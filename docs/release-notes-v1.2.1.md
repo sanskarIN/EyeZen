@@ -1,0 +1,39 @@
+# EyeZen v1.2.1 — Reliability, screen comfort and safe recovery
+
+EyeZen v1.2.1 is a maintenance release candidate for the existing local-first desktop and browser applications. The release must **not** be published before the linked development PRs, full CI matrix and applicable manual acceptance checks are complete.
+
+## Proposed improvements since v1.2.0
+
+- **Safer notifications:** Desktop break timers no longer initiate unsolicited operating-system notification permission requests. The user-triggered test action is the explicit permission entry point.
+- **Stronger monitor failure handling:** If monitor enumeration fails, the overlay backend removes previously created EyeZen tint windows rather than leaving stale visual effects.
+- **More responsive schedules:** Profile scheduling is reevaluated when the running app regains foreground focus or its document becomes visible.
+- **Browser data recovery:** If local settings cannot be parsed, users may export the original raw record and explicitly confirm a reset of EyeZen's storage key, preserving other same-origin data.
+- **Regression tests:** Additional TypeScript and Rust cases cover permission denial, overnight weekday rules, schedule boundaries, monitor overlay retirement and browser recovery.
+- **Documentation:** Reconcile successful v1.2.0 Pages deployment and clarify hardware acceptance requirements.
+
+## Preserved capabilities
+
+- Windows, macOS and Linux desktop application with themes, profiles, reminders and opt-in visual tint windows on supported desktop sessions.
+- Local-first web edition with static GitHub Pages documentation and validated browser storage.
+- Version-1 settings schema and JSON backup import/export. No cloud account or analytics is required.
+
+## Important platform limitations
+
+**The visual tint is not physical monitor brightness, operating-system Night Light/Night Shift, HDR adjustment, ICC calibration or true hardware color-temperature control.** Linux X11 overlays are experimental; Wayland global overlays remain unsupported. Exclusive fullscreen, security surfaces and operating-system/compositor differences can prevent visual overlays. Native devices must still be tested in practice.
+
+Windows MSI, macOS Apple Silicon DMG, Linux DEB and RPM bundles remain **unsigned** unless a future release explicitly adds and verifies signing. Browser reminders require an active tab; native schedules/reminders do not operate while the entire app process is closed. EyeZen is comfort/workflow software, not medical software.
+
+## Release gates before publishing
+
+1. Merge and verify the targeted v1.2.1 fixes and tests.
+2. Pass frontend lint/types/tests/build and Rust fmt/Clippy/tests plus all unsigned installer builds.
+3. Record real-device overlay acceptance where possible; do not describe untested hardware as verified.
+4. Confirm the app, installer and dependency lockfiles all report `1.2.1`.
+5. Manually run the protected release workflow from `main` using `PUBLISH` only after the checks above. The workflow must not auto-publish on a normal push.
+
+## Links
+
+- Source: https://github.com/sanskarIN/EyeZen
+- Web edition: https://sanskarin.github.io/EyeZen/
+- Documentation: https://sanskarin.github.io/EyeZen/docs/
+- Full quality gates: https://github.com/sanskarIN/EyeZen/blob/main/docs/v1.2.1-quality-gates.md
