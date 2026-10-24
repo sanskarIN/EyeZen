@@ -15,6 +15,24 @@ export interface WebStorage {
   removeItem(key: string): void;
 }
 
+/** Inspect original browser data without parsing or changing an invalid record. */
+export function readRawWebState(storage: Pick<WebStorage, "getItem">): string | null {
+  try {
+    return storage.getItem(WEB_STORAGE_KEY);
+  } catch {
+    throw new Error("Browser storage cannot be read. The original settings were not modified.");
+  }
+}
+
+/** Delete only EyeZen's stored settings after the user explicitly confirms. */
+export function clearWebState(storage: Pick<WebStorage, "removeItem">): void {
+  try {
+    storage.removeItem(WEB_STORAGE_KEY);
+  } catch {
+    throw new Error("Browser storage cannot be cleared. Existing settings remain unchanged.");
+  }
+}
+
 export function loadWebState(storage: WebStorage): EyeZenState {
   let json: string | null;
   try {
