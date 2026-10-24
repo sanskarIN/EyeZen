@@ -55,6 +55,16 @@ fn update_script(settings: &ComfortSettings) -> String {
     )
 }
 
+/// Identify our own windows made obsolete by a changed monitor layout.
+fn is_stale_overlay(label: &str, monitor_count: usize) -> bool {
+    let Some(suffix) = label.strip_prefix(PREFIX) else {
+        return false;
+    };
+    suffix
+        .parse::<usize>()
+        .map_or(true, |index| index >= monitor_count)
+}
+
 /// A windowing protocol may prohibit screen-global positioning or click-through.
 pub fn support_reason() -> Option<&'static str> {
     #[cfg(target_os = "linux")]
@@ -141,7 +151,15 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
         });
     }
 
-    let monitors = app.available_monitors().map_err(|e| e.to_string())?;
+    let monitors = match app.available_monitors() {
+        Ok(monitors) => monitors,
+        Err(error) => {
+            // An enumeration failure can follow a disconnect or session change.
+            // Never leave yesterday's overlays active at stale coordinates.
+            close_overlays(&app);
+            return Err(format!("Cannot enumerate displays: {error}"));
+        }
+    };
     if monitors.is_empty() {
         close_overlays(&app);
         return Ok(OverlayResult {
@@ -216,13 +234,8 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
                 .map_err(|e| format!("Cannot show display {index}: {e}"))?;
         }
         for (label, window) in app.webview_windows() {
-            if let Some(suffix) = label.strip_prefix(PREFIX) {
-                if suffix
-                    .parse::<usize>()
-                    .map_or(true, |index| index >= monitors.len())
-                {
-                    let _ = window.close();
-                }
+            if is_stale_overlay(&label, monitors.len()) {
+                let _ = window.close();
             }
         }
         Ok(())
@@ -267,6 +280,43 @@ mod tests {
             intensity: 100,
         };
         assert_eq!(fractions(&settings), (0.0, 0.0));
+    }
+
+    #[test]
+    fn retired_monitor_overlays_are_identified_without_touching_other_windows() {
+        assert!(!is_stale_overlay("main", 1));
+        assert!(!is_stale_overlay("comfort-overlay-0", 1));
+        assert!(is_stale_overlay("comfort-overlay-1", 1));
+        assert!(is_stale_overlay("comfort-overlay-not-an-index", 2));
+        assert!(is_stale_overlay("comfort-overlay-", 0));
+        assert!(!is_stale_overlay("comfort-overlay-3", 4));
+        assert!(is_stale_overlay("comfort-overlay-3", 3));
+    }
+
+    #[test]
+    fn intensity_zero_produces_no_tint_or_dimming() {
+        let settings = ComfortSettings {
+            enabled: true,
+            warmth: 100,
+            intensity: 0,
+        };
+        assert_eq!(fractions(&settings), (0.0, 0.0));
+    }
+
+    #[test]
+    fn stronger_intensity_does_not_reduce_tint_opacity() {
+        let mut settings = ComfortSettings {
+            enabled: true,
+            warmth: 75,
+            intensity: 20,
+        };
+        let low = fractions(&settings);
+        settings.intensity = 80;
+        let high = fractions(&settings);
+        assert!(high.0 > low.0);
+        assert!(high.1 > low.1);
+        assert!(high.0 <= 0.35);
+        assert!(high.1 <= 0.22);
     }
 
     #[test]
