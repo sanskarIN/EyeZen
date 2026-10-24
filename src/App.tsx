@@ -11,6 +11,7 @@ import type { ComfortProfile, EyeZenState, OverlayResult, PlatformReport, Schedu
 import { createDefaults, newBreaks, newComfort, themes } from "./defaults";
 import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, requestDesktopNotificationPermission, requestWebNotificationPermission, saveState } from "./services/native";
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
+import { clearWebState, readRawWebState } from "./services/web-storage";
 import { validTime } from "./services/schedule";
 import { evaluateBreak } from "./services/reminders";
 import { Empty, Panel, Range, Status, Toggle } from "./components/ui";
@@ -58,6 +59,7 @@ export default function App() {
   const [selectedProfile, setSelectedProfile] = useState<string>("productivity");
   const [notification, setNotification] = useState("");
   const [loadError, setLoadError] = useState("");
+  const [recoveryMessage, setRecoveryMessage] = useState("");
   const [hasLoaded, setHasLoaded] = useState(false);
   const [shortcutActive, setShortcutActive] = useState(false);
   const [breakPaused, setBreakPaused] = useState(false);
@@ -288,9 +290,45 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [pauseRemaining]);
 
+  function downloadCorruptWebSettings() {
+    try {
+      const raw = readRawWebState(window.localStorage);
+      if (raw === null) throw Error("There are no saved settings to export.");
+      const blob = new Blob([raw], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "eyezen-web-original-settings.txt";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 5_000);
+      setRecoveryMessage("Raw settings exported. Keep this file before resetting browser data.");
+    } catch (error) {
+      setRecoveryMessage("Unable to export raw settings: " + String(error));
+    }
+  }
+
+  function resetCorruptWebSettings() {
+    if (desktop || !window.confirm("This removes EyeZen's saved browser settings on this site. Export a raw copy first if you want to preserve them. Reset now?")) return;
+    try {
+      clearWebState(window.localStorage);
+      window.location.reload();
+    } catch (error) {
+      setRecoveryMessage("Unable to reset browser settings: " + String(error));
+    }
+  }
+
   if (loadError) return <main className="fatal">
     <Shield size={38} /><h1>Unable to open EyeZen settings</h1><p>{loadError}</p>
-    <p className="muted">Your existing data has not been silently discarded. Review the configuration file and restart.</p>
+    <p className="muted">{desktop
+      ? "Your existing data has not been silently discarded. Review the local configuration file and restart."
+      : "Your browser data has not been overwritten. Export the original data before choosing to reset EyeZen browser settings."}</p>
+    {!desktop && <div className="recovery-actions">
+      <button type="button" onClick={downloadCorruptWebSettings}>Export raw saved data</button>
+      <button type="button" onClick={resetCorruptWebSettings}>Reset EyeZen browser settings</button>
+    </div>}
+    {recoveryMessage && <p role="status">{recoveryMessage}</p>}
   </main>;
   if (!data || !report) return <main className="splash"><Eye size={44}/><h1>EyeZen</h1><p>Opening your workspace…</p></main>;
 
