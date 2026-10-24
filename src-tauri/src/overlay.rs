@@ -55,6 +55,16 @@ fn update_script(settings: &ComfortSettings) -> String {
     )
 }
 
+/// Identify our own windows made obsolete by a changed monitor layout.
+fn is_stale_overlay(label: &str, monitor_count: usize) -> bool {
+    let Some(suffix) = label.strip_prefix(PREFIX) else {
+        return false;
+    };
+    suffix
+        .parse::<usize>()
+        .map_or(true, |index| index >= monitor_count)
+}
+
 /// A windowing protocol may prohibit screen-global positioning or click-through.
 pub fn support_reason() -> Option<&'static str> {
     #[cfg(target_os = "linux")]
@@ -224,13 +234,8 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
                 .map_err(|e| format!("Cannot show display {index}: {e}"))?;
         }
         for (label, window) in app.webview_windows() {
-            if let Some(suffix) = label.strip_prefix(PREFIX) {
-                if suffix
-                    .parse::<usize>()
-                    .map_or(true, |index| index >= monitors.len())
-                {
-                    let _ = window.close();
-                }
+            if is_stale_overlay(&label, monitors.len()) {
+                let _ = window.close();
             }
         }
         Ok(())
