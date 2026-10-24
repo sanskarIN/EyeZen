@@ -366,6 +366,8 @@ export default function App() {
         {navigation.map(item => <button key={item.id} type="button"
           className={"nav-item " + (screen === item.id ? "selected" : "")}
           aria-current={screen === item.id ? "page" : undefined}
+          aria-label={item.name}
+          title={item.name}
           onClick={() => setScreen(item.id)}>
           <item.icon size={18} /><span>{item.name}</span>{screen === item.id && <ChevronRight size={15} />}
         </button>)}
