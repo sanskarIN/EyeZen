@@ -93,6 +93,8 @@ jobs:
         shell: bash
         run: |
           test "$(node -p "require('./package.json').version")" = "1.2.1"
+          test "$(node -p "require('./package-lock.json').version")" = "1.2.1"
+          test "$(node -p "require('./package-lock.json').packages[''].version")" = "1.2.1"
           test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "1.2.1"
           grep -q '^version = "1.2.1"$' src-tauri/Cargo.toml
       - uses: actions/download-artifact@v4
