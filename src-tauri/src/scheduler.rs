@@ -62,6 +62,36 @@ mod tests {
         assert_eq!(matching_rule(&rules, at(2026, 10, 15, 12)).unwrap().id, "a");
     }
     #[test]
+    fn daytime_start_is_inclusive_and_end_is_exclusive() {
+        let mut monday = rule("work", "09:00", "17:00", 2);
+        monday.weekdays = vec![0];
+        assert!(matching_rule(&[monday.clone()], at(2026, 10, 19, 8)).is_none());
+        assert!(matching_rule(&[monday.clone()], at(2026, 10, 19, 9)).is_some());
+        assert!(matching_rule(&[monday.clone()], at(2026, 10, 19, 16)).is_some());
+        assert!(matching_rule(&[monday], at(2026, 10, 19, 17)).is_none());
+    }
+    #[test]
+    fn overnight_uses_start_weekday_not_the_current_day() {
+        let mut monday = rule("overnight", "22:00", "07:00", 2);
+        monday.weekdays = vec![0];
+        assert!(matching_rule(&[monday.clone()], at(2026, 10, 19, 22)).is_some());
+        assert!(matching_rule(&[monday.clone()], at(2026, 10, 20, 6)).is_some());
+        assert!(matching_rule(&[monday.clone()], at(2026, 10, 20, 7)).is_none());
+        assert!(matching_rule(&[monday], at(2026, 10, 21, 2)).is_none());
+    }
+    #[test]
+    fn disabled_rules_do_not_win_conflicts() {
+        let high = ScheduleRule {
+            enabled: false,
+            ..rule("disabled", "08:00", "17:00", 255)
+        };
+        let low = rule("active", "08:00", "17:00", 1);
+        assert_eq!(
+            matching_rule(&[high, low], at(2026, 10, 19, 12)).map(|r| r.id.as_str()),
+            Some("active")
+        );
+    }
+    #[test]
     fn overnight_rules_use_previous_day() {
         let rules = vec![rule("night", "22:00", "07:00", 3)];
         assert!(matching_rule(&rules, at(2026, 10, 15, 2)).is_some());

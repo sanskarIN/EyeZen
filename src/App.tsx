@@ -238,8 +238,21 @@ export default function App() {
       } catch (error) { if (alive) setNotification("Schedule check failed: " + String(error)); }
     };
     void tick();
+    // Background timers can be throttled while the machine sleeps or a tab is hidden.
+    // Refresh immediately when EyeZen regains focus or becomes visible.
+    const onFocus = () => { void tick(); };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void tick();
+    };
     const timer = window.setInterval(tick, 60_000);
-    return () => { alive = false; window.clearInterval(timer); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
     // Profile application is guarded by current dependencies; save effects handle persistence.
   }, [data?.activeProfileId, data?.manualOverride, data?.schedules, data?.profiles]);
 
