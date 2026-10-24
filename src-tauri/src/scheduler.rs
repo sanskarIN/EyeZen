@@ -87,8 +87,7 @@ mod tests {
         };
         let low = rule("active", "08:00", "17:00", 1);
         assert_eq!(
-            matching_rule(&[high, low], at(2026, 10, 19, 12))
-                .map(|r| r.id.as_str()),
+            matching_rule(&[high, low], at(2026, 10, 19, 12)).map(|r| r.id.as_str()),
             Some("active")
         );
     }
