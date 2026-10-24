@@ -72,3 +72,11 @@ jobs:
             Windows) npx tauri build --bundles msi ;;
             macOS) npx tauri build --bundles dmg ;;
           esac
+      - name: Save preview installers for manual acceptance
+        if: ${{ github.event_name == 'pull_request' && startsWith(github.head_ref, 'release/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyezen-preview-pr-${{ github.event.pull_request.number }}-${{ matrix.os }}
+          path: src-tauri/target/release/bundle/**
+          if-no-files-found: error
+          retention-days: 7
