@@ -4,7 +4,7 @@
 
 EyeZen is a privacy-focused, open-source desktop and browser application for personalizing an on-screen workspace. It combines an expressive theme system, comfort preferences, workspace profiles, schedules, configurable break reminders, and accessibility settings.
 
-> **Latest stable:** [EyeZen v1.2.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.0), officially released with Windows, macOS and Linux installers. The GitHub Pages web app and documentation are built, but repository Pages must be enabled under Settings → Pages → Source → GitHub Actions before the URLs become live.
+> **Latest stable:** [EyeZen v1.2.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.0), officially released with Windows, macOS and Linux installers. The browser app and documentation were successfully deployed through GitHub Pages on October 15, 2026 (after a successful workflow rerun).
 
 ## Overview
 
@@ -42,7 +42,7 @@ This is customization software, **not a medical device**. No feature can guarant
 - **Documentation & complete feature list:** https://sanskarin.github.io/EyeZen/docs/
 - **[Web edition guide](docs/web-edition.md)** · **[Feature matrix](docs/feature-matrix.md)** · **[v1.2.0 release notes](docs/release-notes-v1.2.0.md)**
 
-The web edition is a static site using same-origin browser storage. You can save and import profiles, customize themes, configure schedules and use optional reminders. It cannot tint other desktop apps, control native monitor hardware or run background services after the tab closes. Export your settings JSON before clearing browser data. These URLs require a successful GitHub Pages deployment.
+The web edition is a static site using same-origin browser storage. You can save and import profiles, customize themes, configure schedules and use optional reminders. It cannot tint other desktop apps, control native monitor hardware or run background services after the tab closes. Export your settings JSON before clearing browser data. These URLs were deployed successfully on October 15, 2026. Availability may still depend on GitHub Pages service status.
 
 ## Build from source
 
@@ -62,8 +62,8 @@ See [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for current
 ~~~sh
 git clone https://github.com/sanskarIN/EyeZen.git
 cd EyeZen
-git checkout release-1.2.0
-npm install
+git checkout v1.2.0
+npm ci
 npm run icons
 npm run tauri dev
 ~~~
@@ -106,9 +106,9 @@ Read [docs/architecture.md](docs/architecture.md), [docs/platform-support.md](do
 1. **v1.0.0:** initial tested core, explicit platform limitations, unsigned packaging through automated checks.
 2. **v1.1.0:** profile/settings reliability, improved wake checks for reminders, optional timed pause; native background scheduling remains future work.
 3. **v1.1.1:** opt-in per-monitor visual tint overlays; hardware color/brightness remains untouched.
-4. **v1.2.x+:** vetted per-platform display adapters, multi-monitor enumeration, hardware brightness where supported; zero fabricated successes.
-5. **v1.2.0:** public docs, working browser-local app, browser-compatible reminders and Pages deployment.
-6. **Future:** better theme composition, focus routines, color-accurate workflow safeguards, signed installers and community translations.
+4. **v1.2.0:** web edition, browser-local persistence, public documentation and Pages deployment.
+5. **v1.2.1 (planned):** harden screen-tint failure recovery, permission-driven notifications, scheduler regression coverage and release documentation.
+6. **Future:** vetted OS display adapters, better focus routines, color-accurate safeguards, signed installers and community translations. Hardware adjustment must never be claimed until implemented and tested.
 
 See [what_changed.md](what_changed.md) for current implementation status and blockers.
 
