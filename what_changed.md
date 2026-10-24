@@ -1,3 +1,13 @@
+# EyeZen v1.2.1 preparation — October 24, 2026
+
+**Current stable:** [v1.2.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.0). This is a development planning entry; v1.2.1 has **not** been published.
+
+**Correction to the historical v1.2.0 report below:** The initial GitHub Pages deployment failed because Pages was not configured, but the workflow was subsequently rerun successfully on **October 15, 2026** (run [38707631171](https://github.com/sanskarIN/EyeZen/actions/runs/38707631171), attempt 2). The desktop release workflow also succeeded (run [38707631189](https://github.com/sanskarIN/EyeZen/actions/runs/38707631189)). Historical entries are retained to explain the initial blocker.
+
+**Next release gates:** real desktop acceptance for overlay click-through/monitor hotplug, tests for scheduling and native notification prompts, and validation of installers. Passing CI is not the same as hardware validation. See [v1.2.1 quality gates](docs/v1.2.1-quality-gates.md).
+
+---
+
 # EyeZen v1.2.0 — Web and public documentation release
 
 **Branch:** `release-1.2.0` · **PR:** https://github.com/sanskarIN/EyeZen/pull/7  

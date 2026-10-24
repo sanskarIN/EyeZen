@@ -1,9 +1,9 @@
 # Testing and release acceptance
 
-Run these checks before calling v1.0.0 stable:
+Run these checks before proposing any new stable version, including v1.2.1:
 
 ~~~sh
-npm install
+npm ci
 npm run icons
 npm run lint
 npm run typecheck
@@ -11,8 +11,8 @@ npm run test
 npm run build
 cd src-tauri
 cargo fmt --all -- --check
-cargo clippy --all-targets -- -D warnings
-cargo test
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
 ~~~
 
 ## Covered by source tests
@@ -42,3 +42,7 @@ TypeScript/Vitest: overnight matching, conflict tie-breaking, quiet-hours and in
 A passing frontend job establishes only the specific scripts that ran. A passing Rust CI build verifies compilation/tests on that runner; it does not prove control of physical hardware. Test records should include commit SHA, OS version, hardware, check executed, observed behavior, and remaining blockers.
 
 Stable tags should not be created when release-critical checks are incomplete.
+
+## v1.2.1 acceptance scope
+
+See [v1.2.1 quality gates](v1.2.1-quality-gates.md) for the proposed staged verification plan. The GitHub Actions workflows test compilation and packaging, not physical display placement or interaction on every OS/compositor. Record actual hardware and OS details when signing off manual checks.
