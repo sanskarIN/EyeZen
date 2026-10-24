@@ -44,11 +44,18 @@ export async function notifyBreak(): Promise<boolean> {
     });
     return true;
   }
-  let granted = await isPermissionGranted();
-  if (!granted) granted = (await requestPermission()) === "granted";
-  if (!granted) return false;
+  // Recurring reminders must never trigger a surprise system permission prompt.
+  // Permission is requested only from the explicitly clicked "Test notification" action.
+  if (!(await isPermissionGranted())) return false;
   sendNotification({ title: "EyeZen · Time for a pause", body: "Consider looking away from the screen for a moment." });
   return true;
+}
+
+/** Request desktop permission only in response to an explicit user action. */
+export async function requestDesktopNotificationPermission(): Promise<boolean> {
+  if (!desktop) return false;
+  if (await isPermissionGranted()) return true;
+  return (await requestPermission()) === "granted";
 }
 
 /** Only call from an explicit user click; browsers disallow unsolicited prompts. */
