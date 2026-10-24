@@ -12,6 +12,7 @@ const MAX_BYTES = 128_000;
 export interface WebStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
+  removeItem(key: string): void;
 }
 
 export function loadWebState(storage: WebStorage): EyeZenState {
