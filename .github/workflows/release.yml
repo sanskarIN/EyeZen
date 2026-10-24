@@ -1,10 +1,7 @@
-name: Publish EyeZen v1.2.0
+name: Publish EyeZen v1.2.1
 
+# Explicit manual gate: normal pushes and documentation edits must never tag a release.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'docs/release-notes-v1.2.0.md'
   workflow_dispatch:
     inputs:
       confirm_release:
@@ -13,7 +10,7 @@ on:
         default: 'NO'
 
 concurrency:
-  group: eyezen-v1-2-0-release
+  group: eyezen-v1-2-1-release
   cancel-in-progress: false
 
 permissions:
@@ -21,7 +18,7 @@ permissions:
 
 jobs:
   verify:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event.inputs.confirm_release == 'PUBLISH')
+    if: github.ref == 'refs/heads/main' && github.event.inputs.confirm_release == 'PUBLISH'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +78,7 @@ jobs:
         run: npx tauri build --bundles ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: eyezen-1.2.0-${{ matrix.artifact }}-unsigned
+          name: eyezen-1.2.1-${{ matrix.artifact }}-unsigned
           path: src-tauri/target/release/bundle/**
           if-no-files-found: error
 
@@ -95,12 +92,12 @@ jobs:
       - name: Require exact release versions
         shell: bash
         run: |
-          test "$(node -p "require('./package.json').version")" = "1.2.0"
-          test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "1.2.0"
-          grep -q '^version = "1.2.0"$' src-tauri/Cargo.toml
+          test "$(node -p "require('./package.json').version")" = "1.2.1"
+          test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "1.2.1"
+          grep -q '^version = "1.2.1"$' src-tauri/Cargo.toml
       - uses: actions/download-artifact@v4
         with:
-          pattern: eyezen-1.2.0-*-unsigned
+          pattern: eyezen-1.2.1-*-unsigned
           path: artifacts
           merge-multiple: true
       - name: Publish GitHub release only when all bundles succeed
@@ -109,7 +106,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view v1.2.0 >/dev/null 2>&1; then
+          if gh release view v1.2.1 >/dev/null 2>&1; then
             echo "Release already exists; refusing to replace published files."
             exit 0
           fi
@@ -123,8 +120,8 @@ jobs:
             find . -type f \( -name '*.msi' -o -name '*.dmg' -o -name '*.deb' -o -name '*.rpm' \) -print0 |
               sort -z | xargs -0 -r sha256sum > SHA256SUMS.txt
           )
-          gh release create v1.2.0 "${installers[@]}" artifacts/SHA256SUMS.txt \
+          gh release create v1.2.1 "${installers[@]}" artifacts/SHA256SUMS.txt \
             --target "${GITHUB_SHA}" \
-            --title "EyeZen v1.2.0" \
-            --notes-file docs/release-notes-v1.2.0.md \
+            --title "EyeZen v1.2.1" \
+            --notes-file docs/release-notes-v1.2.1.md \
             --latest
