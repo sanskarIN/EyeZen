@@ -4,15 +4,13 @@
 - [x] Frontend lint, TypeScript checks and Vitest on v1.2.0 PR (run 38695620120)
 - [x] Rust formatting, Clippy, tests, and Windows/macOS/Linux unsigned bundles on the v1.2.0 PR (run 38695620120)
 - [x] Browser persistence tests cover schema validation, wrong version, corrupt settings, quota errors, normal round-trip and origin separation
-- [ ] Official release workflow publishes MSI, DMG, DEB, RPM and SHA256SUMS on merged `main`
-- [ ] Pages workflow produces app and documentation artifact with `/EyeZen/` Vite base
+- [x] Official release workflow published MSI, DMG, DEB, RPM and SHA256SUMS on merged `main` (run 38707631189)
+- [x] Pages workflow built and deployed the app and documentation with `/EyeZen/` Vite base (successful run 38707631171, attempt 2)
 
-## Site publishing prerequisite (repository owner)
-GitHub Pages for this repository must be enabled by a maintainer: **Settings → Pages → Build and deployment → Source → GitHub Actions**. Then the committed `Publish EyeZen Web and Documentation` workflow can publish `dist/`.
+## GitHub Pages deployment record
+The original Pages attempt failed while repository Pages settings were not yet configured. On **October 15, 2026**, the same workflow was rerun (attempt 2) and both the build and deploy jobs succeeded. The public app and docs URLs below are the expected deployment targets. This checklist records the CI deployment result; it does not replace runtime browser acceptance testing.
 
-This repository's GitHub connection has permission to commit workflows but does not expose an authenticated Pages administration setting. The source selection cannot be honestly marked complete until the owner enables it and a deploy run succeeds.
-
-After deploying, verify:
+Post-deployment manual browser acceptance (not certified by Actions):
 - https://sanskarin.github.io/EyeZen/ loads the EyeZen web app and bundled assets.
 - https://sanskarin.github.io/EyeZen/docs/ loads the responsive complete documentation site.
 - Navigation from the app to docs, and docs back to app, both work.
