@@ -2,7 +2,30 @@
 
 All notable release changes will be documented here.
 
-## [Unreleased] — 1.1.1 desktop-wide visual comfort
+## [Unreleased] — v1.2.1 stabilization (pending checks)
+
+### In preparation
+- Never request desktop OS notification permission from an automatic reminder; permission is requested from a user action
+- Remove existing screen tint overlays when monitor enumeration fails, with regression tests
+- Reevaluate schedule rules promptly when the window regains focus or visibility
+- Offer opt-in raw browser settings export and a confirmed, key-only reset on corrupt local-storage records
+- Add boundary and recovery tests; reconcile the v1.2.0 GitHub Pages deployment status
+- Real-world multi-monitor acceptance, accessibility review and package signing remain distinct from passing CI
+
+## [1.2.0] — 2026-10-15
+
+### Added
+- Working static web edition with local browser persistence, profile editing, themes, reminders and manual JSON import/export
+- Public GitHub Pages documentation and platform compatibility guide
+- Successful cross-platform unsigned installer release and deployment workflows
+
+### Limitations
+- Browser app cannot tint other desktop windows or control hardware displays
+- Native overlay behavior on physical monitors still requires platform-specific acceptance evidence
+- No publisher signing, hardware brightness, calibrated color management or guaranteed process-independent scheduling
+
+
+## [1.1.1] — 2026-10-15 — desktop-wide visual comfort
 
 ### Added
 - Opt-in click-through transparent tint windows for each actual enumerated display where supported
@@ -18,7 +41,7 @@ All notable release changes will be documented here.
 - macOS uses Tauri private transparency API and cannot target the Mac App Store
 - Actual multi-monitor user hardware testing is still required
 
-## [Unreleased] — 1.1.0 preparation
+## [1.1.0] — 2026-10-15 — reliability and comfort routines
 
 ### Added
 - Optional in-app screen-pause countdown that uses the configured reminder duration
