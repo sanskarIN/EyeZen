@@ -283,6 +283,43 @@ mod tests {
     }
 
     #[test]
+    fn retired_monitor_overlays_are_identified_without_touching_other_windows() {
+        assert!(!is_stale_overlay("main", 1));
+        assert!(!is_stale_overlay("comfort-overlay-0", 1));
+        assert!(is_stale_overlay("comfort-overlay-1", 1));
+        assert!(is_stale_overlay("comfort-overlay-not-an-index", 2));
+        assert!(is_stale_overlay("comfort-overlay-", 0));
+        assert!(!is_stale_overlay("comfort-overlay-3", 4));
+        assert!(is_stale_overlay("comfort-overlay-3", 3));
+    }
+
+    #[test]
+    fn intensity_zero_produces_no_tint_or_dimming() {
+        let settings = ComfortSettings {
+            enabled: true,
+            warmth: 100,
+            intensity: 0,
+        };
+        assert_eq!(fractions(&settings), (0.0, 0.0));
+    }
+
+    #[test]
+    fn stronger_intensity_does_not_reduce_tint_opacity() {
+        let mut settings = ComfortSettings {
+            enabled: true,
+            warmth: 75,
+            intensity: 20,
+        };
+        let low = fractions(&settings);
+        settings.intensity = 80;
+        let high = fractions(&settings);
+        assert!(high.0 > low.0);
+        assert!(high.1 > low.1);
+        assert!(high.0 <= 0.35);
+        assert!(high.1 <= 0.22);
+    }
+
+    #[test]
     fn generated_script_contains_only_bounded_numbers() {
         let settings = ComfortSettings {
             enabled: true,
