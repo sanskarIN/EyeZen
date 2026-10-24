@@ -9,7 +9,7 @@ import {
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import type { ComfortProfile, EyeZenState, OverlayResult, PlatformReport, ScheduleRule } from "./types";
 import { createDefaults, newBreaks, newComfort, themes } from "./defaults";
-import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, requestWebNotificationPermission, saveState } from "./services/native";
+import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, requestDesktopNotificationPermission, requestWebNotificationPermission, saveState } from "./services/native";
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
 import { validTime } from "./services/schedule";
 import { evaluateBreak } from "./services/reminders";
@@ -200,7 +200,12 @@ export default function App() {
 
   async function previewReminder() {
     try {
-      if (!desktop && !(await requestWebNotificationPermission())) {
+      if (desktop) {
+        if (!(await requestDesktopNotificationPermission())) {
+          setNotification("Desktop notification permission is unavailable or was denied. In-app break reminders still work.");
+          return;
+        }
+      } else if (!(await requestWebNotificationPermission())) {
         setNotification("Browser notifications are unavailable or permission was denied. In-app reminders still work while the tab is open.");
         return;
       }
