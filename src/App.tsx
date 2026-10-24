@@ -639,7 +639,7 @@ export default function App() {
         </div>}
 
         {screen === "about" && <div className="two-col">
-          <Panel title="EyeZen · Version 1.2.0" description="Your screen. Your comfort. Your environment.">
+          <Panel title="EyeZen · Version 1.2.1" description="Your screen. Your comfort. Your environment.">
             <div className="about-mark"><Eye size={58}/></div>
             <p className="readable">EyeZen is a local-first, local-first desktop and browser workspace utility built with Rust, Tauri 2, React, and TypeScript.</p>
             <p className="readable">It helps you customize themes, locally saved profiles, schedules, and gentle reminders without accounts or analytics. The desktop app can additionally apply supported visual tint overlays to your screens.</p>
