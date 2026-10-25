@@ -2,7 +2,7 @@
 
 ## Supported releases
 
-EyeZen v1.0.0 is the initial desktop release. There is not yet a published security-support or long-term-support guarantee.
+EyeZen v1.2.0 is the latest published stable release. The v1.2.1 candidate is **not** a published stable release and remains subject to manual device, accessibility and security acceptance. There is no published long-term-support or guaranteed patch-lifetime policy.
 
 ## Reporting vulnerabilities
 
@@ -18,3 +18,6 @@ Report security issues privately through the repository's GitHub security adviso
 - Unsupported OS display APIs must not be driven through undocumented registry edits/private frameworks.
 - Exit should not leave EyeZen-owned overlays or temporary modifications.
 - Update dependencies regularly and scan for known vulnerabilities before release.
+- Review weekly npm and RustSec reports from [Audit EyeZen dependencies](.github/workflows/security-audit.yml), including transitive dependencies and warnings.
+- Record findings, exceptions and a maintainer decision before stable tagging; see the [v1.2.1 review](docs/security-review-v1.2.1.md).
+- Never claim that a passing advisory scan is proof of binary signing, malware analysis or tested display behavior.
