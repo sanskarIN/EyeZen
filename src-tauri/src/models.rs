@@ -136,8 +136,22 @@ fn supported_theme(name: &str) -> bool {
     )
 }
 
+/// Parse exactly HH:MM, matching the web edition's strict clock input.
+pub(crate) fn parse_clock(value: &str) -> Option<chrono::NaiveTime> {
+    let bytes = value.as_bytes();
+    let valid_shape = bytes.len() == 5
+        && bytes[2] == b':'
+        && [0, 1, 3, 4]
+            .iter()
+            .all(|&index| bytes[index].is_ascii_digit());
+    if !valid_shape {
+        return None;
+    }
+    chrono::NaiveTime::parse_from_str(value, "%H:%M").ok()
+}
+
 fn check_time(value: &str) -> bool {
-    chrono::NaiveTime::parse_from_str(value, "%H:%M").is_ok()
+    parse_clock(value).is_some()
 }
 fn check_breaks(value: &BreakPreferences) -> Result<(), String> {
     if !(5..=240).contains(&value.interval_minutes) {
@@ -271,6 +285,37 @@ mod tests {
         });
         assert!(state.validate().is_err());
     }
+    #[test]
+    fn clock_input_is_exactly_zero_padded_ascii_hhmm() {
+        for input in ["00:00", "07:15", "23:59"] {
+            assert!(parse_clock(input).is_some(), "{input}");
+        }
+        for input in ["7:15", "07:5", "24:00", "09:60", "９:00", "07:15:00", "07:15 "] {
+            assert!(parse_clock(input).is_none(), "{input}");
+        }
+
+        let invalid_quiet = EyeZenState {
+            breaks: BreakPreferences {
+                quiet_start: "7:15".into(),
+                ..BreakPreferences::default()
+            },
+            ..EyeZenState::default()
+        };
+        assert!(invalid_quiet.validate().is_err());
+
+        let mut invalid_schedule = EyeZenState::default();
+        invalid_schedule.schedules.push(ScheduleRule {
+            id: "unpad".into(),
+            profile_id: "reading".into(),
+            weekdays: vec![0],
+            start: "7:15".into(),
+            end: "09:00".into(),
+            priority: 1,
+            enabled: true,
+        });
+        assert!(invalid_schedule.validate().is_err());
+    }
+
     #[test]
     fn round_trip_settings() {
         let state = EyeZenState::default();
