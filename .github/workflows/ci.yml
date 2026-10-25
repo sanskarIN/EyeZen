@@ -81,3 +81,40 @@ jobs:
           path: src-tauri/target/release/bundle/**
           if-no-files-found: error
           retention-days: 7
+
+  preview-packages:
+    name: Verify release-candidate installer inventory
+    needs: rust
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.head_ref, 'release/') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download the three tested platform bundles
+        uses: actions/download-artifact@v4
+        with:
+          pattern: eyezen-preview-pr-${{ github.event.pull_request.number }}-*
+          path: input
+          merge-multiple: false
+      - name: Arrange bundles by release platform
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p verified
+          mv "input/eyezen-preview-pr-${{ github.event.pull_request.number }}-windows-latest" verified/eyezen-1.2.1-windows-unsigned
+          mv "input/eyezen-preview-pr-${{ github.event.pull_request.number }}-macos-latest" verified/eyezen-1.2.1-macos-unsigned
+          mv "input/eyezen-preview-pr-${{ github.event.pull_request.number }}-ubuntu-24.04" verified/eyezen-1.2.1-linux-unsigned
+      - name: Require MSI, DMG, DEB, RPM with portable SHA-256 manifest
+        run: node scripts/verify-release-assets.mjs verified 1.2.1
+      - name: Retain preview checksums for manual testers
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyezen-preview-pr-${{ github.event.pull_request.number }}-checksums
+          path: verified/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
