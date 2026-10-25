@@ -80,9 +80,18 @@ pub fn recover(path: &Path) -> Result<EyeZenState, String> {
     if !path.exists() {
         let previous = path.with_extension("json.previous");
         if previous.exists() {
-            let original = load(&previous)?;
-            save(path, &original)?;
-            return Ok(original);
+            // Interrupted Windows replacement: prefer the last valid settings.
+            // If *only* the previous file survived but is invalid, preserve
+            // those original bytes and create usable defaults instead of
+            // permanently preventing the app from opening.
+            let restored = load(&previous).unwrap_or_default();
+            save(path, &restored).map_err(|e| {
+                format!(
+                    "Unable to recover settings; previous backup preserved at {}: {e}",
+                    previous.display()
+                )
+            })?;
+            return Ok(restored);
         }
     }
     match load(path) {
