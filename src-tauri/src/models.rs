@@ -141,9 +141,7 @@ pub(crate) fn parse_clock(value: &str) -> Option<chrono::NaiveTime> {
     let bytes = value.as_bytes();
     let valid_shape = bytes.len() == 5
         && bytes[2] == b':'
-        && [0, 1, 3, 4]
-            .iter()
-            .all(|&index| bytes[index].is_ascii_digit());
+        && [0, 1, 3, 4].iter().all(|&index| bytes[index].is_ascii_digit());
     if !valid_shape {
         return None;
     }
