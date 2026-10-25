@@ -1,6 +1,6 @@
 # EyeZen v1.2.1 candidate integration — October 25, 2026
 
-**No stable release has been published:** v1.2.0 remains current.
+**Release authorization (2026-10-25):** The maintainer explicitly approved publishing v1.2.1 after automated CI/audits and checksum checks. A one-time, merge-triggered publisher is scoped to the release PR and retains version/inventory/CI checks. **Device, assistive-technology and remaining RustSec warning disposition have not been tested/cleared and must remain open in issues #18 and #29.** No signing or verified hardware behavior is claimed.
 
 - Reviewed the targeted October 2026 Vite advisory; merged [security PR #27](https://github.com/sanskarIN/EyeZen/pull/27) after all four applicable PR CI checks passed. The v1.2.1 candidate now locks Vite 6.4.5 to avoid the affected 6.4.4 development-server build tool.
 - Added [PR #28](https://github.com/sanskarIN/EyeZen/pull/28) recurring npm/RustSec audit workflow and [PR #30](https://github.com/sanskarIN/EyeZen/pull/30) evidence/security-policy cleanup. On [run 40183649632](https://github.com/sanskarIN/EyeZen/actions/runs/40183649632), both audits passed with zero vulnerability entries; **five informational RustSec warnings remain** for [issue #29](https://github.com/sanskarIN/EyeZen/issues/29).
