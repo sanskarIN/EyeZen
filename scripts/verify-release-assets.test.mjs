@@ -78,6 +78,11 @@ test("refuses wrong platform, mismatched version and empty assets", async () => 
     await writeFile(installer(root, "windows", "msi"), "");
     await assert.rejects(verifyReleaseAssets(root, "1.2.1"), /nonempty regular file/);
   });
+  await fixture(async root => {
+    await rename(installer(root, "macos", "dmg"),
+      path.join(group(root, "macos"), "EyeZen_1.2.1.2_macos.dmg"));
+    await assert.rejects(verifyReleaseAssets(root, "1.2.1"), /mismatched version/);
+  });
 });
 
 test("never follows symlinked release packages", async () => {
