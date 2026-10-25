@@ -138,15 +138,15 @@ mod tests {
         large.profiles = (0..100)
             .map(|i| {
                 let mut profile = template.clone();
-                profile.id = format!("{i:02}{}", "\\0".repeat(68));
-                profile.name = "\\0".repeat(80);
+                profile.id = format!("{i:02}{}", "\0".repeat(68));
+                profile.name = "\0".repeat(80);
                 profile
             })
             .collect();
         large.active_profile_id = large.profiles[0].id.clone();
         large.schedules = (0..100)
             .map(|i| crate::models::ScheduleRule {
-                id: format!("{i:02}{}", "\\0".repeat(68)),
+                id: format!("{i:02}{}", "\0".repeat(68)),
                 profile_id: large.profiles[i].id.clone(),
                 weekdays: vec![0, 1, 2, 3, 4, 5, 6],
                 start: "09:00".into(),
