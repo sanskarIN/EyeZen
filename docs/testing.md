@@ -17,7 +17,7 @@ cargo test --locked
 
 ## Covered by source tests
 
-Rust: default state validation, active profile references, invalid break intervals, serde round-trip, backup/recovery, oversized-but-schema-valid settings rejected before file replacement, overnight schedule matching, deterministic priority, deliberate unsupported hardware outcome.
+Rust: default state validation, active profile references, invalid break intervals, serde round-trip, backup/recovery (including preference restoration from a valid previous backup and preservation of corrupt originals), oversized-but-schema-valid settings rejected before file replacement, overnight schedule matching, deterministic priority, deliberate unsupported hardware outcome.
 
 TypeScript/Vitest: overnight matching, conflict tie-breaking, quiet-hours and invalid clock syntax.
 
