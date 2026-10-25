@@ -1,8 +1,10 @@
 # EyeZen v1.2.1 — Reliability, screen comfort and safe recovery
 
-EyeZen v1.2.1 is a maintenance release candidate for the existing local-first desktop and browser applications. The release must **not** be published before the linked development PRs, full CI matrix and applicable manual acceptance checks are complete.
+EyeZen v1.2.1 is a maintenance release for the existing local-first desktop and browser applications. Its release candidate passed the full frontend/native build, artifact-hash and npm/RustSec advisory workflows. The maintainer explicitly authorized publication on October 25, 2026 **with some manual acceptance and informational dependency warnings still open**. This authorization is not evidence that real-device or assistive-technology tests have passed.
 
-## Proposed improvements since v1.2.0
+**Important release limitations:** Windows, macOS and Linux installers are unsigned. Real-device installation, mixed-DPI multi-monitor click-through, hotplug/sleep recovery, mobile-browser screen-reader acceptance and independent license/platform-specific security review are not yet verified. Before enabling a whole-desktop tint, keep EyeZen's emergency disable/quit controls accessible. Please report failures in [the acceptance tracker](https://github.com/sanskarIN/EyeZen/issues/18); RustSec informational-warning follow-up is tracked in [issue #29](https://github.com/sanskarIN/EyeZen/issues/29).
+
+## Improvements since v1.2.0
 
 - **Keyboard-safe onboarding:** The first-run dialog now moves focus inside, keeps Tab/Shift+Tab within its controls, supports Escape dismissal and restores previous focus. Background navigation is inert; manual assistive-technology acceptance remains pending.
 - **Stronger installer identity checks:** Preview and release verifiers now reject package filenames that do not use the official EyeZen prefix and exact expected version. Hash checks are not code signing or proof of provenance.
