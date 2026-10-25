@@ -9,6 +9,9 @@
 - Updated draft release candidate [PR #13](https://github.com/sanskarIN/EyeZen/pull/13); the combined candidate requires its own fresh CI before release consideration.
 - Added the merged deadline-based optional pause countdown correction ([PR #23](https://github.com/sanskarIN/EyeZen/pull/23)) with delayed-callback regression tests and updated sleep/resume manual acceptance instructions.
 - Candidate `04c38a3` passed five CI checks and produced Windows, macOS, Linux and checksum artifacts; this is automated evidence, not physical-device acceptance.
+- Candidate `be49a40` passed all five automated jobs and retained Windows, macOS, Linux and checksum artifacts in [run 40175815907](https://github.com/sanskarIN/EyeZen/actions/runs/40175815907), before the next integration.
+- Merged [PR #24](https://github.com/sanskarIN/EyeZen/pull/24) (first-run dialog focus containment), [PR #25](https://github.com/sanskarIN/EyeZen/pull/25) (official installer filename verification), and [PR #26](https://github.com/sanskarIN/EyeZen/pull/26) (missing-primary/invalid-previous native storage recovery), each after green PR CI.
+- The integrated release candidate needs a fresh five-job verification run and matching checksum artifacts; no real-device tests have been inferred from CI.
 - Real hardware, multi-display overlays, browser accessibility, installers and security review remain separate acceptance tasks in [issue #18](https://github.com/sanskarIN/EyeZen/issues/18).
 
 ---

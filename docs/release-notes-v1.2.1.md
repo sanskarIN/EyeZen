@@ -4,6 +4,9 @@ EyeZen v1.2.1 is a maintenance release candidate for the existing local-first de
 
 ## Proposed improvements since v1.2.0
 
+- **Keyboard-safe onboarding:** The first-run dialog now moves focus inside, keeps Tab/Shift+Tab within its controls, supports Escape dismissal and restores previous focus. Background navigation is inert; manual assistive-technology acceptance remains pending.
+- **Stronger installer identity checks:** Preview and release verifiers now reject package filenames that do not use the official EyeZen prefix and exact expected version. Hash checks are not code signing or proof of provenance.
+- **Interrupted-settings recovery:** If the primary native settings file is missing and the previous backup is invalid or oversized, EyeZen restores defaults while retaining the previous backup bytes for investigation.
 - **Safer notifications:** Desktop break timers no longer initiate unsolicited operating-system notification permission requests. The user-triggered test action is the explicit permission entry point.
 - **Stronger monitor failure handling:** If monitor enumeration fails, the overlay backend removes previously created EyeZen tint windows rather than leaving stale visual effects.
 - **Reliable optional pause countdown:** Countdown time is now computed from a session-only deadline, including when a hidden tab or sleeping computer delays one-second callbacks. Added pure regression coverage; real suspend/resume verification is still required.

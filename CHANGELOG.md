@@ -5,6 +5,9 @@ All notable release changes will be documented here.
 ## [Unreleased] — v1.2.1 stabilization (pending checks)
 
 ### In preparation
+- Contain keyboard focus within first-run onboarding and restore prior focus when dismissed; add modal keyboard tests
+- Reject other-product installer filenames even if platform, version fragment and extension are plausible
+- Recover usable defaults when the primary settings file is missing and the previous backup is malformed or oversized, preserving the original file
 - Never request desktop OS notification permission from an automatic reminder; permission is requested from a user action
 - Remove existing screen tint overlays when monitor enumeration fails, with regression tests
 - Reevaluate schedule rules promptly when the window regains focus or visibility
