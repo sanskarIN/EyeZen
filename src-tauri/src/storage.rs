@@ -95,9 +95,23 @@ pub fn recover(path: &Path) -> Result<EyeZenState, String> {
                 .timestamp_nanos_opt()
                 .ok_or("Invalid backup timestamp")?;
             let corrupt = path.with_extension(format!("corrupt-{timestamp}.json"));
-            fs::rename(path, corrupt).map_err(|e| format!("{error}; backup failed: {e}"))?;
-            let state = EyeZenState::default();
-            save(path, &state)?;
+            // Quarantine the unreadable primary before attempting any replacement.
+            // If a Windows replacement left a validated .previous file, prefer
+            // that last known-good state over silently resetting preferences.
+            fs::rename(path, &corrupt).map_err(|e| format!("{error}; backup failed: {e}"))?;
+            let previous = path.with_extension("json.previous");
+            let restored = if previous.exists() {
+                load(&previous).ok()
+            } else {
+                None
+            };
+            let state = restored.unwrap_or_default();
+            save(path, &state).map_err(|e| {
+                format!(
+                    "{error}; original settings preserved at {}; recovery failed: {e}",
+                    corrupt.display()
+                )
+            })?;
             Ok(state)
         }
     }
@@ -116,6 +130,63 @@ mod tests {
         assert_eq!(recover(&path).unwrap(), state);
         assert!(path.exists());
     }
+    #[test]
+    fn corrupt_primary_restores_last_valid_previous_settings() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let previous = path.with_extension("json.previous");
+        let last_good = EyeZenState {
+            theme: "sepia".into(),
+            active_profile_id: "reading".into(),
+            ..EyeZenState::default()
+        };
+        fs::write(&previous, serde_json::to_vec_pretty(&last_good).unwrap()).unwrap();
+        fs::write(&path, "{bad primary").unwrap();
+
+        assert_eq!(recover(&path).unwrap(), last_good);
+        assert_eq!(load(&path).unwrap(), last_good);
+        assert_eq!(load(&previous).unwrap(), last_good);
+        assert!(dir.path().read_dir().unwrap().any(|entry| {
+            entry
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .starts_with("settings.corrupt-")
+        }));
+    }
+
+    #[test]
+    fn rejects_invalid_previous_settings_and_preserves_corrupt_records() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let previous = path.with_extension("json.previous");
+        fs::write(&path, "{corrupt primary").unwrap();
+        fs::write(&previous, "{also invalid").unwrap();
+
+        let restored = recover(&path).unwrap();
+        assert_eq!(restored, EyeZenState::default());
+        assert_eq!(load(&path).unwrap(), EyeZenState::default());
+        assert_eq!(fs::read_to_string(&previous).unwrap(), "{also invalid");
+        let corrupt = dir
+            .path()
+            .read_dir()
+            .unwrap()
+            .find_map(|entry| {
+                let entry = entry.unwrap();
+                if entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("settings.corrupt-")
+                {
+                    Some(entry.path())
+                } else {
+                    None
+                }
+            })
+            .expect("corrupt original retained");
+        assert_eq!(fs::read_to_string(corrupt).unwrap(), "{corrupt primary");
+    }
+
     #[test]
     fn oversize_data_is_not_loaded() {
         let dir = tempfile::tempdir().unwrap();
