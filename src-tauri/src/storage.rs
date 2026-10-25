@@ -140,6 +140,32 @@ mod tests {
         assert!(path.exists());
     }
     #[test]
+    fn missing_primary_with_invalid_previous_recovers_without_deleting_evidence() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let previous = path.with_extension("json.previous");
+        let original = b"{invalid old backup";
+        fs::write(&previous, original).unwrap();
+
+        assert_eq!(recover(&path).unwrap(), EyeZenState::default());
+        assert_eq!(load(&path).unwrap(), EyeZenState::default());
+        assert_eq!(fs::read(&previous).unwrap(), original);
+    }
+
+    #[test]
+    fn missing_primary_with_oversized_previous_preserves_backup_bytes() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let previous = path.with_extension("json.previous");
+        let oversized = vec![b'x'; MAX_SETTINGS_BYTES + 1];
+        fs::write(&previous, &oversized).unwrap();
+
+        assert_eq!(recover(&path).unwrap(), EyeZenState::default());
+        assert_eq!(load(&path).unwrap(), EyeZenState::default());
+        assert_eq!(fs::read(&previous).unwrap(), oversized);
+    }
+
+    #[test]
     fn corrupt_primary_restores_last_valid_previous_settings() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("settings.json");
