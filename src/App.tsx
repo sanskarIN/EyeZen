@@ -366,6 +366,8 @@ export default function App() {
         {navigation.map(item => <button key={item.id} type="button"
           className={"nav-item " + (screen === item.id ? "selected" : "")}
           aria-current={screen === item.id ? "page" : undefined}
+          aria-label={item.name}
+          title={item.name}
           onClick={() => setScreen(item.id)}>
           <item.icon size={18} /><span>{item.name}</span>{screen === item.id && <ChevronRight size={15} />}
         </button>)}
@@ -380,6 +382,12 @@ export default function App() {
     <main className="main-content">
       <header className="topbar">
         <div className="crumb"><span>EyeZen</span><ChevronRight size={14}/><strong>{navigation.find(n => n.id === screen)?.name}</strong></div>
+        <label className="mobile-nav">
+          <span>EyeZen section</span>
+          <select aria-label="EyeZen section" value={screen} onChange={event => setScreen(event.target.value as Screen)}>
+            {navigation.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+        </label>
         <div className="top-actions">
           <span className="platform-chip"><Laptop size={15}/>{report.os}</span>
           <button className="avatar-btn" onClick={() => setScreen("settings")} aria-label="Open settings"><Settings2 size={18}/></button>
