@@ -2,7 +2,40 @@
 
 All notable release changes will be documented here.
 
-## [Unreleased] — 1.1.1 desktop-wide visual comfort
+## [1.2.1] — 2026-10-25 — reliability and integrity maintenance
+
+**Release disclosure:** Cross-platform build/test/checksum and dependency vulnerability audits passed. Real-device overlay, installer and screen-reader acceptance remain unverified; five informational RustSec warnings are tracked in issue #29. Packages are unsigned.
+
+### Changed and fixed
+- Update Vite build tooling to patched v6.4.5 for GHSA-8g5g-mxqh-grgj
+- Add weekly, manual and dependency-change npm/RustSec advisory scans; reviewed both actual JSON results (zero reported vulnerability entries; five informational RustSec warnings tracked in issue #29)
+- Contain keyboard focus within first-run onboarding and restore prior focus when dismissed; add modal keyboard tests
+- Reject other-product installer filenames even if platform, version fragment and extension are plausible
+- Recover usable defaults when the primary settings file is missing and the previous backup is malformed or oversized, preserving the original file
+- Never request desktop OS notification permission from an automatic reminder; permission is requested from a user action
+- Remove existing screen tint overlays when monitor enumeration fails, with regression tests
+- Reevaluate schedule rules promptly when the window regains focus or visibility
+- Offer opt-in raw browser settings export and a confirmed, key-only reset on corrupt local-storage records
+- Add boundary and recovery tests; reconcile the v1.2.0 GitHub Pages deployment status
+- Restore validated previous native settings when a primary configuration is corrupt, preserving quarantined originals
+- Align native schedule and settings time parsing with strict zero-padded HH:MM syntax used by the browser
+- Enforce complete per-platform installer inventory and generate portable SHA-256 checksums before any manual stable publishing action
+- Real-world multi-monitor acceptance, accessibility review and package signing remain distinct from passing CI
+
+## [1.2.0] — 2026-10-15
+
+### Added
+- Working static web edition with local browser persistence, profile editing, themes, reminders and manual JSON import/export
+- Public GitHub Pages documentation and platform compatibility guide
+- Successful cross-platform unsigned installer release and deployment workflows
+
+### Limitations
+- Browser app cannot tint other desktop windows or control hardware displays
+- Native overlay behavior on physical monitors still requires platform-specific acceptance evidence
+- No publisher signing, hardware brightness, calibrated color management or guaranteed process-independent scheduling
+
+
+## [1.1.1] — 2026-10-15 — desktop-wide visual comfort
 
 ### Added
 - Opt-in click-through transparent tint windows for each actual enumerated display where supported
@@ -18,7 +51,7 @@ All notable release changes will be documented here.
 - macOS uses Tauri private transparency API and cannot target the Mac App Store
 - Actual multi-monitor user hardware testing is still required
 
-## [Unreleased] — 1.1.0 preparation
+## [1.1.0] — 2026-10-15 — reliability and comfort routines
 
 ### Added
 - Optional in-app screen-pause countdown that uses the configured reminder duration

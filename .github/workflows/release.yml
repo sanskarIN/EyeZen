@@ -1,10 +1,7 @@
-name: Publish EyeZen v1.2.0
+name: Publish EyeZen v1.2.1
 
+# Explicit manual gate: normal pushes and documentation edits must never tag a release.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'docs/release-notes-v1.2.0.md'
   workflow_dispatch:
     inputs:
       confirm_release:
@@ -13,7 +10,7 @@ on:
         default: 'NO'
 
 concurrency:
-  group: eyezen-v1-2-0-release
+  group: eyezen-v1-2-1-release
   cancel-in-progress: false
 
 permissions:
@@ -21,7 +18,7 @@ permissions:
 
 jobs:
   verify:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event.inputs.confirm_release == 'PUBLISH')
+    if: github.ref == 'refs/heads/main' && github.event.inputs.confirm_release == 'PUBLISH'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +26,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci --no-audit --no-fund
+      - run: npm run check:versions
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
@@ -81,7 +79,7 @@ jobs:
         run: npx tauri build --bundles ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: eyezen-1.2.0-${{ matrix.artifact }}-unsigned
+          name: eyezen-1.2.1-${{ matrix.artifact }}-unsigned
           path: src-tauri/target/release/bundle/**
           if-no-files-found: error
 
@@ -92,39 +90,41 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Require exact release versions
         shell: bash
         run: |
-          test "$(node -p "require('./package.json').version")" = "1.2.0"
-          test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "1.2.0"
-          grep -q '^version = "1.2.0"$' src-tauri/Cargo.toml
+          test "$(node -p "require('./package.json').version")" = "1.2.1"
+          test "$(node -p "require('./package-lock.json').version")" = "1.2.1"
+          test "$(node -p "require('./package-lock.json').packages[''].version")" = "1.2.1"
+          test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "1.2.1"
+          grep -q '^version = "1.2.1"$' src-tauri/Cargo.toml
       - uses: actions/download-artifact@v4
         with:
-          pattern: eyezen-1.2.0-*-unsigned
+          pattern: eyezen-1.2.1-*-unsigned
           path: artifacts
-          merge-multiple: true
+          merge-multiple: false
+      - name: Validate complete installer set and generate portable SHA-256 manifest
+        run: node scripts/verify-release-assets.mjs artifacts 1.2.1
       - name: Publish GitHub release only when all bundles succeed
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view v1.2.0 >/dev/null 2>&1; then
+          if gh release view v1.2.1 >/dev/null 2>&1; then
             echo "Release already exists; refusing to replace published files."
-            exit 0
-          fi
-          mapfile -d '' installers < <(find artifacts -type f \( -name '*.msi' -o -name '*.dmg' -o -name '*.deb' -o -name '*.rpm' \) -print0)
-          if [ "${#installers[@]}" -lt 4 ]; then
-            echo "Missing platform installers (expected MSI, DMG, DEB, RPM)."
             exit 1
           fi
-          (
-            cd artifacts
-            find . -type f \( -name '*.msi' -o -name '*.dmg' -o -name '*.deb' -o -name '*.rpm' \) -print0 |
-              sort -z | xargs -0 -r sha256sum > SHA256SUMS.txt
-          )
-          gh release create v1.2.0 "${installers[@]}" artifacts/SHA256SUMS.txt \
+          mapfile -d '' installers < artifacts/release-assets.nul
+          if [ "${#installers[@]}" -ne 4 ]; then
+            echo "Release manifest did not contain exactly four installers."
+            exit 1
+          fi
+          gh release create v1.2.1 "${installers[@]}" artifacts/SHA256SUMS.txt \
             --target "${GITHUB_SHA}" \
-            --title "EyeZen v1.2.0" \
-            --notes-file docs/release-notes-v1.2.0.md \
+            --title "EyeZen v1.2.1" \
+            --notes-file docs/release-notes-v1.2.1.md \
             --latest
