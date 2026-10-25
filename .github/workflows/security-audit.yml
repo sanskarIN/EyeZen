@@ -1,0 +1,118 @@
+name: Audit EyeZen dependencies
+
+# Separate from build CI: advisory databases change without repository commits.
+# A failed audit is actionable evidence, not approval to publish a release.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src-tauri/Cargo.toml'
+      - 'src-tauri/Cargo.lock'
+      - '.github/workflows/security-audit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src-tauri/Cargo.toml'
+      - 'src-tauri/Cargo.lock'
+      - '.github/workflows/security-audit.yml'
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eyezen-security-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  npm-audit:
+    name: npm / production and development advisories
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate locked npm dependency resolution
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Audit all locked npm packages (fail on high/critical)
+        run: npm audit --audit-level=high --json > npm-audit.json
+      - name: Summarize npm findings
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -s npm-audit.json ]; then
+            echo 'No npm audit result produced; audit unavailable or failed.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node --input-type=module -e '
+            import { readFileSync, appendFileSync } from "node:fs";
+            try {
+              const result = JSON.parse(readFileSync("npm-audit.json", "utf8"));
+              const counts = result.metadata?.vulnerabilities;
+              if (!counts) throw Error("Missing vulnerability metadata");
+              const order = ["critical", "high", "moderate", "low", "info"];
+              const summary = order.map(level => level + ": " + (counts[level] ?? 0)).join(", ");
+              appendFileSync(process.env.GITHUB_STEP_SUMMARY, "### npm advisory results\n\n" + summary + "\n");
+            } catch (error) {
+              appendFileSync(process.env.GITHUB_STEP_SUMMARY, "npm audit report could not be parsed: " + error.message + "\n");
+              process.exitCode = 1;
+            }
+          '
+      - name: Retain npm audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyezen-npm-audit
+          path: npm-audit.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  cargo-audit:
+    name: RustSec / Cargo.lock advisories
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install official RustSec cargo-audit CLI
+        run: cargo install cargo-audit --locked
+      - name: Audit the locked Rust dependency graph
+        run: cargo audit --file src-tauri/Cargo.lock --json > cargo-audit.json
+      - name: Summarize RustSec findings
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -s cargo-audit.json ]; then
+            echo 'No RustSec result produced; audit unavailable or failed.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node --input-type=module -e '
+            import { readFileSync, appendFileSync } from "node:fs";
+            try {
+              const report = JSON.parse(readFileSync("cargo-audit.json", "utf8"));
+              const count = report.vulnerabilities?.count;
+              if (!Number.isInteger(count)) throw Error("Missing vulnerabilities.count");
+              const warnings = report.warnings ?? {};
+              const details = Object.entries(warnings).map(([k, v]) => k + ": " + v.length).join(", ");
+              appendFileSync(process.env.GITHUB_STEP_SUMMARY, "### RustSec advisory results\n\nKnown vulnerable crates: " + count + "\n\n" + (details || "No separate warning categories reported") + "\n");
+            } catch (error) {
+              appendFileSync(process.env.GITHUB_STEP_SUMMARY, "RustSec result could not be parsed: " + error.message + "\n");
+              process.exitCode = 1;
+            }
+          '
+      - name: Retain RustSec report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyezen-cargo-audit
+          path: cargo-audit.json
+          if-no-files-found: warn
+          retention-days: 14
