@@ -1,3 +1,16 @@
+# EyeZen v1.2.1 candidate integration — October 25, 2026
+
+**No stable release has been published:** v1.2.0 remains current.
+
+- Merged PRs #14–#17, #19 and #20 after their completed PR CI checks.
+- Restored mobile web navigation, introduced preview installer artifacts and version consistency checks.
+- Protected desktop settings writes against oversized JSON and added fallback to validated previous backups when the primary settings file is corrupt, preserving invalid originals.
+- Aligned native settings validation and scheduling with the web edition's exact HH:MM time format.
+- Updated draft release candidate [PR #13](https://github.com/sanskarIN/EyeZen/pull/13); the combined candidate requires its own fresh CI before release consideration.
+- Real hardware, multi-display overlays, browser accessibility, installers and security review remain separate acceptance tasks in [issue #18](https://github.com/sanskarIN/EyeZen/issues/18).
+
+---
+
 # EyeZen v1.2.1 preparation — October 24, 2026
 
 **Current stable:** [v1.2.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.0). This is a development planning entry; v1.2.1 has **not** been published.
