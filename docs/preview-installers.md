@@ -10,7 +10,7 @@ Stable releases are published only after passing automated CI and applicable man
 4. Download the appropriate `eyezen-preview-pr-<number>-<runner>` archive; extract it.
 5. Review the archive contents before installing. Typical platform packages are Windows `.msi`, macOS `.dmg`, Linux `.deb` or `.rpm`.
 
-Artifacts are retained for **7 days** and appear only after their respective platform CI job has completed successfully. GitHub may require a signed-in account to download workflow artifacts. CI does not currently code-sign or notarize these preview installers; treat them as test builds and do not redistribute them as stable software.
+Artifacts are retained for **7 days** and appear only after their respective platform CI job has completed successfully. On internal release-candidate pull requests, a separate **Verify release-candidate installer inventory** job also checks the downloaded MSI, DMG, DEB and RPM files and retains a companion `eyezen-preview-pr-<number>-checksums` artifact. The aggregate check must pass before treating the candidate packaging matrix as complete. GitHub may require a signed-in account to download workflow artifacts. CI does not currently code-sign or notarize these preview installers; treat them as test builds and do not redistribute them as stable software.
 
 ## Required manual checks
 
