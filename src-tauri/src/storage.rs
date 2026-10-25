@@ -165,14 +165,23 @@ mod tests {
         assert_eq!(restored, EyeZenState::default());
         assert_eq!(load(&path).unwrap(), EyeZenState::default());
         assert_eq!(fs::read_to_string(&previous).unwrap(), "{also invalid");
-        let corrupt = dir.path().read_dir().unwrap().find_map(|entry| {
-            let entry = entry.unwrap();
-            if entry.file_name().to_string_lossy().starts_with("settings.corrupt-") {
-                Some(entry.path())
-            } else {
-                None
-            }
-        }).expect("corrupt original retained");
+        let corrupt = dir
+            .path()
+            .read_dir()
+            .unwrap()
+            .find_map(|entry| {
+                let entry = entry.unwrap();
+                if entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("settings.corrupt-")
+                {
+                    Some(entry.path())
+                } else {
+                    None
+                }
+            })
+            .expect("corrupt original retained");
         assert_eq!(fs::read_to_string(corrupt).unwrap(), "{corrupt primary");
     }
 
