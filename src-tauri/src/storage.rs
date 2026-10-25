@@ -135,9 +135,11 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("settings.json");
         let previous = path.with_extension("json.previous");
-        let mut last_good = EyeZenState::default();
-        last_good.theme = "sepia".into();
-        last_good.active_profile_id = "reading".into();
+        let last_good = EyeZenState {
+            theme: "sepia".into(),
+            active_profile_id: "reading".into(),
+            ..EyeZenState::default()
+        };
         fs::write(&previous, serde_json::to_vec_pretty(&last_good).unwrap()).unwrap();
         fs::write(&path, "{bad primary").unwrap();
 
