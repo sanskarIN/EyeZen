@@ -4,7 +4,7 @@
 
 EyeZen is a privacy-focused, open-source desktop and browser application for personalizing an on-screen workspace. It combines an expressive theme system, comfort preferences, workspace profiles, schedules, configurable break reminders, and accessibility settings.
 
-> **Latest stable:** [EyeZen v1.2.0](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.0), officially released with Windows, macOS and Linux installers. The browser app and documentation were successfully deployed through GitHub Pages on October 15, 2026 (after a successful workflow rerun).
+> **Latest stable:** [EyeZen v1.2.1](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.1), published on October 25, 2026 with unsigned Windows, macOS and Linux installers and a SHA-256 manifest. The browser app and documentation are available on GitHub Pages. The release is CI-verified, while representative real-device and browser accessibility acceptance is still open.
 
 ## Overview
 
@@ -34,13 +34,15 @@ The UI includes Dashboard, Eye Comfort, Themes, Profiles, Automation, Break Assi
 
 The scheduler and reminder timer run in the active browser tab or desktop application's JavaScript runtime. Behavior while suspended, fully closed, or under restricted background execution is not guaranteed. Desktop hardware, wake/sleep, dual-display and notification integrations need real-world validation before being claimed as verified on particular systems.
 
+**v1.2.1 installers are unsigned.** Independent hardware installation, mixed-DPI click-through, hotplug/sleep and screen-reader acceptance have not yet been completed; track [device and browser QA](https://github.com/sanskarIN/EyeZen/issues/18) and [transitive RustSec warnings](https://github.com/sanskarIN/EyeZen/issues/29). Keep the emergency tint-off control accessible.
+
 This is customization software, **not a medical device**. No feature can guarantee prevention of eye disease or eliminate eye strain.
 
 ## Online web edition & documentation
 
 - **Web application:** https://sanskarin.github.io/EyeZen/
 - **Documentation & complete feature list:** https://sanskarin.github.io/EyeZen/docs/
-- **[Web edition guide](docs/web-edition.md)** · **[Feature matrix](docs/feature-matrix.md)** · **[v1.2.0 release notes](docs/release-notes-v1.2.0.md)**
+- **[Web edition guide](docs/web-edition.md)** · **[Feature matrix](docs/feature-matrix.md)** · **[v1.2.1 release notes](docs/release-notes-v1.2.1.md)**
 
 The web edition is a static site using same-origin browser storage. You can save and import profiles, customize themes, configure schedules and use optional reminders. It cannot tint other desktop apps, control native monitor hardware or run background services after the tab closes. Export your settings JSON before clearing browser data. These URLs were deployed successfully on October 15, 2026. Availability may still depend on GitHub Pages service status.
 
@@ -62,7 +64,7 @@ See [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for current
 ~~~sh
 git clone https://github.com/sanskarIN/EyeZen.git
 cd EyeZen
-git checkout v1.2.0
+git checkout v1.2.1
 npm ci
 npm run icons
 npm run tauri dev
@@ -107,7 +109,7 @@ Read [docs/architecture.md](docs/architecture.md), [docs/platform-support.md](do
 2. **v1.1.0:** profile/settings reliability, improved wake checks for reminders, optional timed pause; native background scheduling remains future work.
 3. **v1.1.1:** opt-in per-monitor visual tint overlays; hardware color/brightness remains untouched.
 4. **v1.2.0:** web edition, browser-local persistence, public documentation and Pages deployment.
-5. **v1.2.1 (planned):** harden screen-tint failure recovery, permission-driven notifications, scheduler regression coverage and release documentation.
+5. **v1.2.1 (released):** harden overlay failure recovery, permission-driven notifications, schedules and settings, keyboard onboarding, dependency audits and installer validation. Manual hardware/accessibility follow-up remains open.
 6. **Future:** vetted OS display adapters, better focus routines, color-accurate safeguards, signed installers and community translations. Hardware adjustment must never be claimed until implemented and tested.
 
 See [what_changed.md](what_changed.md) for current implementation status and blockers.
