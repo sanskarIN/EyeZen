@@ -14,6 +14,12 @@
 
 The Vite 6.4.5 `dist.integrity` value in `package-lock.json` was compared to the official [npm version metadata](https://registry.npmjs.org/vite/6.4.5): `sha512-4enwjFfi4IwtEh0w+jPzpLVOFQiPHmmzPxcHXQOyEur47o6u0jE573DmGpjA+7irXoMLYRZD5ZaFUEneS3abPg==`. `npm ci` must confirm the lockfile and exact registry artifact on GitHub CI.
 
+## Repeatable advisory scanning
+
+The new [dependency audit workflow](../.github/workflows/security-audit.yml) runs on dependency-changing pull requests, dependency changes on `main`, manual dispatch, and weekly. It checks **the locked npm tree including development packages** against the live npm advisory endpoint (high/critical fail), and `src-tauri/Cargo.lock` against the live RustSec database. JSON evidence is retained as short-lived GitHub Actions artifacts; scanner failures do **not** constitute a successful security review.
+
+A scan's result applies only to the lockfiles and advisory databases used in that particular run. It does not prove that the native installers are malware-free, signed or safe on real desktop environments. Do not mark a scan as complete until a linked workflow run confirms it actually executed.
+
 ## Outstanding security acceptance (must not be falsely marked complete)
 
 - [ ] Run `npm audit --audit-level=high` from the locked candidate tree and review each finding, including dev-only scope.
