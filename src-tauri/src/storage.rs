@@ -6,6 +6,8 @@ use std::{
 };
 use tauri::Manager;
 
+const MAX_SETTINGS_BYTES: usize = 128_000;
+
 pub fn state_path<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<PathBuf, String> {
     app.path()
         .app_config_dir()
@@ -18,7 +20,7 @@ pub fn load(path: &Path) -> Result<EyeZenState, String> {
         return Ok(EyeZenState::default());
     }
     let metadata = fs::metadata(path).map_err(|e| format!("Cannot inspect settings: {e}"))?;
-    if metadata.len() > 128_000 {
+    if metadata.len() > MAX_SETTINGS_BYTES as u64 {
         return Err("Settings file exceeds the 128 KB safety limit".into());
     }
     let bytes = fs::read(path).map_err(|e| format!("Cannot read settings: {e}"))?;
@@ -30,9 +32,14 @@ pub fn load(path: &Path) -> Result<EyeZenState, String> {
 
 pub fn save(path: &Path, state: &EyeZenState) -> Result<(), String> {
     state.validate()?;
+    // Validate the serialized bytes *before* touching existing settings. Otherwise a
+    // valid in-memory state could be saved but rejected on the very next launch.
+    let data = serde_json::to_vec_pretty(state).map_err(|e| e.to_string())?;
+    if data.len() > MAX_SETTINGS_BYTES {
+        return Err("Settings exceed the 128 KB safety limit; nothing was saved".into());
+    }
     let parent = path.parent().ok_or("Invalid configuration path")?;
     fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    let data = serde_json::to_vec_pretty(state).map_err(|e| e.to_string())?;
     let stamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| e.to_string())?
@@ -116,6 +123,46 @@ mod tests {
         fs::write(&path, vec![b'x'; 128_001]).unwrap();
         assert!(load(&path).is_err());
     }
+    #[test]
+    fn rejects_oversized_valid_state_before_replacing_settings() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let original = EyeZenState::default();
+        save(&path, &original).unwrap();
+        let bytes_before = fs::read(&path).unwrap();
+
+        // Individually valid names and IDs can still expand when JSON escapes
+        // control characters. Exercise the limit against actual serialized bytes.
+        let mut large = EyeZenState::default();
+        let template = large.profiles[0].clone();
+        large.profiles = (0..100)
+            .map(|i| {
+                let mut profile = template.clone();
+                profile.id = format!("{i:02}{}", "\\0".repeat(68));
+                profile.name = "\\0".repeat(80);
+                profile
+            })
+            .collect();
+        large.active_profile_id = large.profiles[0].id.clone();
+        large.schedules = (0..100)
+            .map(|i| crate::models::ScheduleRule {
+                id: format!("{i:02}{}", "\\0".repeat(68)),
+                profile_id: large.profiles[i].id.clone(),
+                weekdays: vec![0, 1, 2, 3, 4, 5, 6],
+                start: "09:00".into(),
+                end: "17:00".into(),
+                priority: 1,
+                enabled: true,
+            })
+            .collect();
+
+        assert!(large.validate().is_ok());
+        assert!(serde_json::to_vec_pretty(&large).unwrap().len() > MAX_SETTINGS_BYTES);
+        assert!(save(&path, &large).unwrap_err().contains("128 KB"));
+        assert_eq!(fs::read(&path).unwrap(), bytes_before);
+        assert_eq!(load(&path).unwrap(), original);
+    }
+
     #[test]
     fn save_load_and_recover() {
         let dir = tempfile::tempdir().unwrap();
