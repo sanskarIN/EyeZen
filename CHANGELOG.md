@@ -12,6 +12,7 @@ All notable release changes will be documented here.
 - Add boundary and recovery tests; reconcile the v1.2.0 GitHub Pages deployment status
 - Restore validated previous native settings when a primary configuration is corrupt, preserving quarantined originals
 - Align native schedule and settings time parsing with strict zero-padded HH:MM syntax used by the browser
+- Enforce complete per-platform installer inventory and generate portable SHA-256 checksums before any manual stable publishing action
 - Real-world multi-monitor acceptance, accessibility review and package signing remain distinct from passing CI
 
 ## [1.2.0] — 2026-10-15
