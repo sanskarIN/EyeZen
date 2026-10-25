@@ -16,6 +16,7 @@ import { clearWebState, readRawWebState } from "./services/web-storage";
 import { validTime } from "./services/schedule";
 import { evaluateBreak } from "./services/reminders";
 import { secondsUntil } from "./services/pause";
+import { wrappedTabTarget } from "./services/dialog-focus";
 import { Empty, Panel, Range, Status, Toggle } from "./components/ui";
 import { ProfileNameField } from "./components/ProfileNameField";
 import { activateProfile, removeProfile } from "./services/profiles";
@@ -58,6 +59,7 @@ export default function App() {
   const [overlayStatus, setOverlayStatus] = useState<OverlayResult | null>(null);
   const overlayQueue = useRef<Promise<void>>(Promise.resolve());
   const [screen, setScreen] = useState<Screen>("dashboard");
+  const onboardingDialog = useRef<HTMLElement | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<string>("productivity");
   const [notification, setNotification] = useState("");
   const [loadError, setLoadError] = useState("");
@@ -155,6 +157,45 @@ export default function App() {
     Object.entries(colors).forEach(([key, value]) => root.style.setProperty(key, String(value)));
     root.dataset.motion = data?.reducedMotion ? "reduced" : "full";
   }, [theme, data?.accent, data?.textScale, data?.reducedMotion]);
+
+  // Modal semantics need real focus containment, not just aria-modal. Inert
+  // background controls and explicitly keep keyboard focus in onboarding.
+  useEffect(() => {
+    if (!data || data.onboardingComplete) return;
+    const dialog = onboardingDialog.current;
+    if (!dialog) return;
+
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusable = () => Array.from(dialog.querySelectorAll<HTMLElement>(
+      "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"
+    )).filter(element => element.getClientRects().length > 0 && !element.closest("[hidden], [inert]"));
+
+    (focusable()[0] ?? dialog).focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setData(current => current ? { ...current, onboardingComplete: true } : current);
+      } else if (event.key === "Tab") {
+        const controls = focusable();
+        if (!controls.length) {
+          event.preventDefault();
+          dialog.focus();
+          return;
+        }
+        const selectedIndex = controls.indexOf(document.activeElement as HTMLElement);
+        const target = wrappedTabTarget(selectedIndex, controls.length, event.shiftKey);
+        if (target !== null) {
+          event.preventDefault();
+          controls[target].focus();
+        }
+      }
+    };
+    dialog.addEventListener("keydown", onKeyDown);
+    return () => {
+      dialog.removeEventListener("keydown", onKeyDown);
+      if (previous?.isConnected && !previous.closest("[inert]")) previous.focus();
+    };
+  }, [data?.onboardingComplete]);
 
   function change(updater: (current: EyeZenState) => EyeZenState) {
     setData(previous => previous ? updater(previous) : previous);
@@ -380,7 +421,7 @@ export default function App() {
   };
 
   return <div className="app-shell">
-    <aside className="sidebar">
+    <aside className="sidebar" inert={!data.onboardingComplete}>
       <div className="brand"><div className="brand-icon"><Eye size={25} strokeWidth={2.4} /></div>
         <div><strong>EyeZen</strong><span>Your comfort workspace</span></div></div>
       <div className="nav-label">WORKSPACE</div>
@@ -401,7 +442,7 @@ export default function App() {
       </div>
     </aside>
 
-    <main className="main-content">
+    <main className="main-content" inert={!data.onboardingComplete}>
       <header className="topbar">
         <div className="crumb"><span>EyeZen</span><ChevronRight size={14}/><strong>{navigation.find(n => n.id === screen)?.name}</strong></div>
         <label className="mobile-nav">
@@ -744,14 +785,14 @@ export default function App() {
     </main>
 
     {!data.onboardingComplete && <div className="onboard-backdrop" role="presentation">
-      <section className="onboard-dialog" role="dialog" aria-modal="true" aria-labelledby="onboard-title">
+      <section className="onboard-dialog" role="dialog" aria-modal="true" aria-labelledby="onboard-title" aria-describedby="onboard-description" tabIndex={-1} ref={onboardingDialog}>
         <div className="onboard-icon"><Eye size={35}/></div>
         <span className="eyebrow">WELCOME TO YOUR NEW WORKSPACE</span>
         <h2 id="onboard-title">Comfort begins with choice.</h2>
-        <p>Choose an appearance, create flexible routines, and keep your settings on your device. Screen tinting depends on your operating system and remains optional; hardware calibration is not modified.</p>
-        <div className="onboard-options"><button onClick={() => patch({ theme: "dark" })} className={data.theme === "dark" ? "picked" : ""}><Moon size={20}/> Dark</button>
-          <button onClick={() => patch({ theme: "light" })} className={data.theme === "light" ? "picked" : ""}><Sun size={20}/> Light</button>
-          <button onClick={() => patch({ theme: "system" })} className={data.theme === "system" ? "picked" : ""}><Laptop size={20}/> System</button></div>
+        <p id="onboard-description">Choose an appearance, create flexible routines, and keep your settings on your device. Screen tinting depends on your operating system and remains optional; hardware calibration is not modified.</p>
+        <div className="onboard-options"><button type="button" aria-pressed={data.theme === "dark"} onClick={() => patch({ theme: "dark" })} className={data.theme === "dark" ? "picked" : ""}><Moon size={20}/> Dark</button>
+          <button type="button" aria-pressed={data.theme === "light"} onClick={() => patch({ theme: "light" })} className={data.theme === "light" ? "picked" : ""}><Sun size={20}/> Light</button>
+          <button type="button" aria-pressed={data.theme === "system"} onClick={() => patch({ theme: "system" })} className={data.theme === "system" ? "picked" : ""}><Laptop size={20}/> System</button></div>
         <Toggle label="Enable gentle break reminders" checked={data.breaks.enabled}
           onChange={enabled => patch({ breaks: { ...data.breaks, enabled } })}/>
         <div className="button-row"><button className="secondary-btn" onClick={() => patch({ onboardingComplete: true })}>Skip for now</button>
