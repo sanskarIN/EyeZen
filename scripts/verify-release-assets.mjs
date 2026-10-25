@@ -45,7 +45,7 @@ export async function verifyReleaseAssets(artifactDirectory, version, writeManif
     throw new Error("Expected an exact numeric release version, e.g. 1.2.1.");
   }
   const root = path.resolve(artifactDirectory);
-  const versionPattern = new RegExp("(^|[^0-9])" + version.replaceAll(".", "\\.") + "([^0-9]|$)");
+  const versionPattern = new RegExp("(^|[_-])" + version.replaceAll(".", "\\.") + "(?=[_-]|\\.(?:msi|dmg|deb|rpm)$)");
   const installers = [];
   const names = new Set();
 
