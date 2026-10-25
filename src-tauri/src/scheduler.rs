@@ -1,9 +1,5 @@
-use crate::models::ScheduleRule;
+use crate::models::{parse_clock, ScheduleRule};
 use chrono::{DateTime, Datelike, Local, NaiveTime, Timelike};
-
-fn parse_time(s: &str) -> Option<NaiveTime> {
-    NaiveTime::parse_from_str(s, "%H:%M").ok()
-}
 pub fn matching_rule(rules: &[ScheduleRule], now: DateTime<Local>) -> Option<&ScheduleRule> {
     let day = now.weekday().num_days_from_monday();
     let previous_day = (day + 6) % 7;
@@ -12,10 +8,10 @@ pub fn matching_rule(rules: &[ScheduleRule], now: DateTime<Local>) -> Option<&Sc
         .iter()
         .filter(|r| r.enabled)
         .filter(|r| {
-            let Some(start) = parse_time(&r.start) else {
+            let Some(start) = parse_clock(&r.start) else {
                 return false;
             };
-            let Some(end) = parse_time(&r.end) else {
+            let Some(end) = parse_clock(&r.end) else {
                 return false;
             };
             if start < end {
@@ -91,6 +87,14 @@ mod tests {
             Some("active")
         );
     }
+    #[test]
+    fn malformed_native_time_rules_never_activate() {
+        let now = at(2026, 10, 19, 8);
+        assert!(matching_rule(&[rule("short-hour", "7:15", "12:00", 1)], now).is_none());
+        assert!(matching_rule(&[rule("short-minute", "07:5", "12:00", 1)], now).is_none());
+        assert!(matching_rule(&[rule("valid", "07:15", "12:00", 1)], now).is_some());
+    }
+
     #[test]
     fn overnight_rules_use_previous_day() {
         let rules = vec![rule("night", "22:00", "07:00", 3)];
