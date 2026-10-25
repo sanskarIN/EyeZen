@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
+    "check:versions": "node scripts/check-versions.mjs",
     "test": "vitest run",
     "lint": "eslint .",
     "tauri": "npm run icons && tauri",

@@ -9,6 +9,7 @@ import {
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import type { ComfortProfile, EyeZenState, OverlayResult, PlatformReport, ScheduleRule } from "./types";
 import { createDefaults, newBreaks, newComfort, themes } from "./defaults";
+import { APP_VERSION } from "./version";
 import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, requestDesktopNotificationPermission, requestWebNotificationPermission, saveState } from "./services/native";
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
 import { clearWebState, readRawWebState } from "./services/web-storage";
@@ -366,6 +367,8 @@ export default function App() {
         {navigation.map(item => <button key={item.id} type="button"
           className={"nav-item " + (screen === item.id ? "selected" : "")}
           aria-current={screen === item.id ? "page" : undefined}
+          aria-label={item.name}
+          title={item.name}
           onClick={() => setScreen(item.id)}>
           <item.icon size={18} /><span>{item.name}</span>{screen === item.id && <ChevronRight size={15} />}
         </button>)}
@@ -373,13 +376,19 @@ export default function App() {
       <div className="sidebar-bottom">
         <div className="sidebar-pill"><span className="online-dot"/><span>{desktop ? "LOCAL DESKTOP APP" : "BROWSER PREVIEW"}</span></div>
         <div className="side-help"><Heart size={17}/> Small steps, more comfort.</div>
-        <span className="version-label">EyeZen v1.2.1</span>
+        <span className="version-label">EyeZen v{APP_VERSION}</span>
       </div>
     </aside>
 
     <main className="main-content">
       <header className="topbar">
         <div className="crumb"><span>EyeZen</span><ChevronRight size={14}/><strong>{navigation.find(n => n.id === screen)?.name}</strong></div>
+        <label className="mobile-nav">
+          <span>EyeZen section</span>
+          <select aria-label="EyeZen section" value={screen} onChange={event => setScreen(event.target.value as Screen)}>
+            {navigation.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+        </label>
         <div className="top-actions">
           <span className="platform-chip"><Laptop size={15}/>{report.os}</span>
           <button className="avatar-btn" onClick={() => setScreen("settings")} aria-label="Open settings"><Settings2 size={18}/></button>
@@ -690,7 +699,7 @@ export default function App() {
         </div>}
 
         {screen === "about" && <div className="two-col">
-          <Panel title="EyeZen · Version 1.2.1" description="Your screen. Your comfort. Your environment.">
+          <Panel title={`EyeZen · Version ${APP_VERSION}`} description="Your screen. Your comfort. Your environment.">
             <div className="about-mark"><Eye size={58}/></div>
             <p className="readable">EyeZen is a local-first, local-first desktop and browser workspace utility built with Rust, Tauri 2, React, and TypeScript.</p>
             <p className="readable">It helps you customize themes, locally saved profiles, schedules, and gentle reminders without accounts or analytics. The desktop app can additionally apply supported visual tint overlays to your screens.</p>
