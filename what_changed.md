@@ -7,6 +7,8 @@
 - Protected desktop settings writes against oversized JSON and added fallback to validated previous backups when the primary settings file is corrupt, preserving invalid originals.
 - Aligned native settings validation and scheduling with the web edition's exact HH:MM time format.
 - Updated draft release candidate [PR #13](https://github.com/sanskarIN/EyeZen/pull/13); the combined candidate requires its own fresh CI before release consideration.
+- Added the merged deadline-based optional pause countdown correction ([PR #23](https://github.com/sanskarIN/EyeZen/pull/23)) with delayed-callback regression tests and updated sleep/resume manual acceptance instructions.
+- Candidate `04c38a3` passed five CI checks and produced Windows, macOS, Linux and checksum artifacts; this is automated evidence, not physical-device acceptance.
 - Real hardware, multi-display overlays, browser accessibility, installers and security review remain separate acceptance tasks in [issue #18](https://github.com/sanskarIN/EyeZen/issues/18).
 
 ---

@@ -28,6 +28,7 @@ TypeScript/Vitest: overnight matching, conflict tie-breaking, quiet-hours and in
 - Create/edit/export/import/delete a profile; check malformed/oversized JSON rejected.
 - Test overlapping and overnight schedules with selected weekdays.
 - Test OS clock changes, daylight saving, suspend/resume and user manual overrides.
+- Start a 30-second optional pause, immediately hide the browser tab or suspend the computer for longer than 30 seconds, then return; verify the pause has finished instead of resuming a stale countdown. Repeat with a short background interval and check the remaining time tracks actual elapsed seconds.
 - Verify break notifications with permissions accepted/denied and quiet hours.
 - Test shortcut conflicts on each OS, register/unregister, and tray lifecycle.
 - Inspect keyboard navigation and screen-reader announcements.

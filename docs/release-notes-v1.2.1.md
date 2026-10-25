@@ -6,6 +6,7 @@ EyeZen v1.2.1 is a maintenance release candidate for the existing local-first de
 
 - **Safer notifications:** Desktop break timers no longer initiate unsolicited operating-system notification permission requests. The user-triggered test action is the explicit permission entry point.
 - **Stronger monitor failure handling:** If monitor enumeration fails, the overlay backend removes previously created EyeZen tint windows rather than leaving stale visual effects.
+- **Reliable optional pause countdown:** Countdown time is now computed from a session-only deadline, including when a hidden tab or sleeping computer delays one-second callbacks. Added pure regression coverage; real suspend/resume verification is still required.
 - **More responsive schedules:** Profile scheduling is reevaluated when the running app regains foreground focus or its document becomes visible.
 - **Browser data recovery:** If local settings cannot be parsed, users may export the original raw record and explicitly confirm a reset of EyeZen's storage key, preserving other same-origin data.
 - **Regression tests:** Additional TypeScript and Rust cases cover permission denial, overnight weekday rules, schedule boundaries, monitor overlay retirement and browser recovery.
