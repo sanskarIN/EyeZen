@@ -90,6 +90,9 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Require exact release versions
         shell: bash
         run: |
@@ -102,7 +105,9 @@ jobs:
         with:
           pattern: eyezen-1.2.1-*-unsigned
           path: artifacts
-          merge-multiple: true
+          merge-multiple: false
+      - name: Validate complete installer set and generate portable SHA-256 manifest
+        run: node scripts/verify-release-assets.mjs artifacts 1.2.1
       - name: Publish GitHub release only when all bundles succeed
         env:
           GH_TOKEN: ${{ github.token }}
@@ -111,18 +116,13 @@ jobs:
           set -euo pipefail
           if gh release view v1.2.1 >/dev/null 2>&1; then
             echo "Release already exists; refusing to replace published files."
-            exit 0
-          fi
-          mapfile -d '' installers < <(find artifacts -type f \( -name '*.msi' -o -name '*.dmg' -o -name '*.deb' -o -name '*.rpm' \) -print0)
-          if [ "${#installers[@]}" -lt 4 ]; then
-            echo "Missing platform installers (expected MSI, DMG, DEB, RPM)."
             exit 1
           fi
-          (
-            cd artifacts
-            find . -type f \( -name '*.msi' -o -name '*.dmg' -o -name '*.deb' -o -name '*.rpm' \) -print0 |
-              sort -z | xargs -0 -r sha256sum > SHA256SUMS.txt
-          )
+          mapfile -d '' installers < artifacts/release-assets.nul
+          if [ "${#installers[@]}" -ne 4 ]; then
+            echo "Release manifest did not contain exactly four installers."
+            exit 1
+          fi
           gh release create v1.2.1 "${installers[@]}" artifacts/SHA256SUMS.txt \
             --target "${GITHUB_SHA}" \
             --title "EyeZen v1.2.1" \
