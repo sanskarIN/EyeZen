@@ -10,6 +10,10 @@ EyeZen v1.2.1 is a maintenance release candidate for the existing local-first de
 - **Browser data recovery:** If local settings cannot be parsed, users may export the original raw record and explicitly confirm a reset of EyeZen's storage key, preserving other same-origin data.
 - **Regression tests:** Additional TypeScript and Rust cases cover permission denial, overnight weekday rules, schedule boundaries, monitor overlay retirement and browser recovery.
 - **Documentation:** Reconcile successful v1.2.0 Pages deployment and clarify hardware acceptance requirements.
+- **Narrow-screen navigation:** A labelled section selector restores all ten app screens on phones; desktop sidebar items retain accessible names, with real-browser accessibility checks still required.
+- **Consistent version display:** The sidebar and About page now read the app version from the same npm metadata. CI verifies npm, Cargo and Tauri versions match.
+- **Safer native storage:** Native saves reject serialized settings beyond 128 KB before altering the existing configuration. A regression test ensures the last valid saved settings remain intact.
+- **Preview installers:** Release-candidate pull requests retain unsigned test installers as short-lived CI artifacts for manual review; a successful build is not hardware approval.
 
 ## Preserved capabilities
 
