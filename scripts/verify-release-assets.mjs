@@ -45,7 +45,9 @@ export async function verifyReleaseAssets(artifactDirectory, version, writeManif
     throw new Error("Expected an exact numeric release version, e.g. 1.2.1.");
   }
   const root = path.resolve(artifactDirectory);
-  const versionPattern = new RegExp("(^|[_-])" + version.replaceAll(".", "\\.") + "(?=[_-]|\\.(?:msi|dmg|deb|rpm)$)");
+  // Only official EyeZen bundle names may enter the release. A file merely
+  // carrying the right version and extension could otherwise be substituted.
+  const versionPattern = new RegExp("^EyeZen[_-]" + version.replaceAll(".", "\\.") + "(?=[_-]|\\.(?:msi|dmg|deb|rpm)$)");
   const installers = [];
   const names = new Set();
 
