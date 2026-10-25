@@ -18,7 +18,10 @@ permissions:
 
 jobs:
   verify:
-    if: github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'release: approve EyeZen v1.2.1') && github.event_name == 'push'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      startsWith(github.event.head_commit.message, 'release: approve EyeZen v1.2.1') &&
+      github.event_name == 'push'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
