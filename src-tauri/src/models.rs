@@ -141,7 +141,9 @@ pub(crate) fn parse_clock(value: &str) -> Option<chrono::NaiveTime> {
     let bytes = value.as_bytes();
     let valid_shape = bytes.len() == 5
         && bytes[2] == b':'
-        && [0, 1, 3, 4].iter().all(|&index| bytes[index].is_ascii_digit());
+        && [0, 1, 3, 4]
+            .iter()
+            .all(|&index| bytes[index].is_ascii_digit());
     if !valid_shape {
         return None;
     }
@@ -288,7 +290,9 @@ mod tests {
         for input in ["00:00", "07:15", "23:59"] {
             assert!(parse_clock(input).is_some(), "{input}");
         }
-        for input in ["7:15", "07:5", "24:00", "09:60", "９:00", "07:15:00", "07:15 "] {
+        for input in [
+            "7:15", "07:5", "24:00", "09:60", "９:00", "07:15:00", "07:15 ",
+        ] {
             assert!(parse_clock(input).is_none(), "{input}");
         }
 
