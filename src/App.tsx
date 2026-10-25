@@ -15,6 +15,7 @@ import { exportJson, parseProfile, readJson, validateBackup } from "./services/i
 import { clearWebState, readRawWebState } from "./services/web-storage";
 import { validTime } from "./services/schedule";
 import { evaluateBreak } from "./services/reminders";
+import { secondsUntil } from "./services/pause";
 import { Empty, Panel, Range, Status, Toggle } from "./components/ui";
 import { ProfileNameField } from "./components/ProfileNameField";
 import { activateProfile, removeProfile } from "./services/profiles";
@@ -69,6 +70,7 @@ export default function App() {
   const [pauseRemaining, setPauseRemaining] = useState(0);
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const lastBreakAt = useRef(Date.now());
+  const pauseEndsAt = useRef<number | null>(null);
   const skipFirstSave = useRef(true);
   const [darkSystem, setDarkSystem] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
 
@@ -285,11 +287,30 @@ export default function App() {
     };
   }, [data?.breaks, breakPaused, pauseRemaining > 0]);
 
+  // A one-second timeout does not measure elapsed time if a hidden tab or OS
+  // sleep delays callbacks. Keep the session-only pause deadline instead, and
+  // recalculate immediately after focus/visibility restoration.
   useEffect(() => {
-    if (pauseRemaining <= 0) return;
-    const timer = window.setTimeout(() => setPauseRemaining(seconds => Math.max(0, seconds - 1)), 1_000);
-    return () => window.clearTimeout(timer);
-  }, [pauseRemaining]);
+    if (pauseRemaining <= 0 || pauseEndsAt.current === null) return;
+    const tick = () => {
+      const remaining = secondsUntil(pauseEndsAt.current ?? 0, Date.now());
+      setPauseRemaining(remaining);
+      if (remaining === 0) {
+        pauseEndsAt.current = null;
+        lastBreakAt.current = Date.now();
+      }
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") tick(); };
+    tick();
+    const timer = window.setInterval(tick, 1_000);
+    window.addEventListener("focus", tick);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", tick);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [pauseRemaining > 0]);
 
   function downloadCorruptWebSettings() {
     try {
@@ -406,6 +427,7 @@ export default function App() {
           <Eye size={19}/><span>Time for an optional screen pause. Your reminder suggests {data.breaks.durationSeconds} seconds.</span>
           <button className="secondary-btn" onClick={() => {
             setBreakDue(false);
+            pauseEndsAt.current = Date.now() + data.breaks.durationSeconds * 1_000;
             setPauseRemaining(data.breaks.durationSeconds);
             lastBreakAt.current = Date.now();
           }}>Start pause</button>
@@ -417,6 +439,7 @@ export default function App() {
         {pauseRemaining > 0 && <div className="alert info-alert reminder-banner" role="status">
           <Clock3 size={19}/><span>Optional screen pause · {pauseRemaining} seconds remaining</span>
           <button className="secondary-btn" onClick={() => {
+            pauseEndsAt.current = null;
             setPauseRemaining(0);
             lastBreakAt.current = Date.now();
           }}>Finish early</button>
@@ -610,7 +633,7 @@ export default function App() {
               onChange={enabled => {
                 patch({ breaks: { ...data.breaks, enabled } });
                 lastBreakAt.current = Date.now();
-                if (!enabled) { setBreakDue(false); setPauseRemaining(0); }
+                if (!enabled) { setBreakDue(false); pauseEndsAt.current = null; setPauseRemaining(0); }
               }}
               description="No webcam, activity tracking, or usage history."/>
             <Range title="Interval" value={data.breaks.intervalMinutes} min={5} max={240} step={5} suffix=" min"
@@ -627,6 +650,7 @@ export default function App() {
               <button className="secondary-btn" onClick={() => {
                 setBreakPaused(!breakPaused);
                 setBreakDue(false);
+                pauseEndsAt.current = null;
                 setPauseRemaining(0);
                 lastBreakAt.current = Date.now();
               }}>
