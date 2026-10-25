@@ -24,6 +24,12 @@ Artifacts are retained for **7 days** and appear only after their respective pla
 
 Do not mark **hardware compatibility verified** simply because GitHub Actions built the executable.
 
+## Release artifact and checksum validation
+
+When a candidate passes device acceptance, the separate manual release workflow must require one MSI, one DMG, one DEB and one RPM. Its release artifact verifier detects missing/duplicate or unexpected platform bundles and generates SHA-256 checksums against **asset basenames** (not temporary CI directory paths). After downloading all four eventual release installers and `SHA256SUMS.txt` into one directory, run `sha256sum -c SHA256SUMS.txt` on Linux or a compatible checksum tool. Passing hashes verifies file integrity against the published manifest, not signing, provenance, or hardware safety.
+
+The check can be exercised without publishing a release using `node scripts/verify-release-assets.mjs <artifacts-directory> 1.2.1` against a directory with the three artifact groups. The existing Vitest suite contains synthetic missing/duplicate/version/checksum regression tests.
+
 ## Scope and security
 
 Uploads are restricted to PRs from `release/` branches to avoid multiplying installer artifacts for every feature PR. Artifacts come from the same CI job that runs Rustfmt, Clippy, native unit tests and frontend compilation before bundling; no publishing token is required. The dedicated release workflow remains manual-only.
