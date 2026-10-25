@@ -2,9 +2,11 @@
 
 All notable release changes will be documented here.
 
-## [Unreleased] — v1.2.1 stabilization (pending checks)
+## [1.2.1] — 2026-10-25 — reliability and integrity maintenance
 
-### In preparation
+**Release disclosure:** Cross-platform build/test/checksum and dependency vulnerability audits passed. Real-device overlay, installer and screen-reader acceptance remain unverified; five informational RustSec warnings are tracked in issue #29. Packages are unsigned.
+
+### Changed and fixed
 - Update Vite build tooling to patched v6.4.5 for GHSA-8g5g-mxqh-grgj
 - Add weekly, manual and dependency-change npm/RustSec advisory scans; reviewed both actual JSON results (zero reported vulnerability entries; five informational RustSec warnings tracked in issue #29)
 - Contain keyboard focus within first-run onboarding and restore prior focus when dismissed; add modal keyboard tests
