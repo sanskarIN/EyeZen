@@ -15,6 +15,7 @@ EyeZen v1.2.1 is a maintenance release candidate for the existing local-first de
 - **Safer native storage:** Native saves reject serialized settings beyond 128 KB before altering the existing configuration. A regression test ensures the last valid saved settings remain intact.
 - **Preview installers:** Release-candidate pull requests retain unsigned test installers as short-lived CI artifacts for manual review; a successful build is not hardware approval.
 - **Verified release inventory:** The manual release workflow now requires exactly one Windows MSI, macOS DMG, Linux DEB and RPM, and generates SHA-256 checksums using downloadable asset names. This provides file integrity checks, not package signing or real-hardware verification.
+- **Verified candidate archives:** Release-candidate CI downloads its own Windows, macOS and Linux installer artifacts, verifies all four package types and publishes preview SHA-256 checksums before manual hardware testing.
 - **Better desktop recovery:** A valid previous configuration can be restored when current native settings are corrupt, while invalid originals remain quarantined.
 - **Consistent schedule input:** Native settings and scheduling now require exact, zero-padded HH:MM times, consistent with the web edition.
 
