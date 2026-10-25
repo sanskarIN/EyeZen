@@ -1,7 +1,7 @@
 # EyeZen v1.2.1 — targeted dependency security review
 
 **Date:** 2026-10-25  
-**Scope:** Snapshot of the v1.2.1 npm/Cargo lockfiles, known Tauri/Vite advisories, and release controls. **This is not a comprehensive vulnerability scan**; no complete `npm audit` or `cargo audit` report has been obtained in this review.
+**Scope:** Snapshot of the v1.2.1 npm/Cargo lockfiles, known Tauri/Vite advisories and release controls. Completed npm/RustSec scans are linked below. **Advisory scans do not cover source-code logic bugs, native system libraries, real-device installations, or the full software supply chain.**
 
 ## Verified versions and specific advisory comparisons
 
@@ -18,12 +18,27 @@ The Vite 6.4.5 `dist.integrity` value in `package-lock.json` was compared to the
 
 The new [dependency audit workflow](../.github/workflows/security-audit.yml) runs on dependency-changing pull requests, dependency changes on `main`, manual dispatch, and weekly. It checks **the locked npm tree including development packages** against the live npm advisory endpoint (high/critical fail), and `src-tauri/Cargo.lock` against the live RustSec database. JSON evidence is retained as short-lived GitHub Actions artifacts; scanner failures do **not** constitute a successful security review.
 
-A scan's result applies only to the lockfiles and advisory databases used in that particular run. It does not prove that the native installers are malware-free, signed or safe on real desktop environments. Do not mark a scan as complete until a linked workflow run confirms it actually executed.
+A scan's result applies only to the lockfiles and advisory databases used in that particular run. It does not prove that the native installers are malware-free, signed or safe on real desktop environments.
+
+### First completed scan — 2026-10-25
+
+[Audit workflow run 40183649632](https://github.com/sanskarIN/EyeZen/actions/runs/40183649632), checked on PR #28 at commit `4060caf`. Both jobs **passed** and retained their complete JSON reports as `eyezen-npm-audit` and `eyezen-cargo-audit` artifacts (retained for 14 days). The report files were downloaded and inspected, not inferred solely from job status.
+
+| Advisory source | Findings |
+| --- | --- |
+| npm registry, full locked dependency tree including dev tools | **0 vulnerabilities** at info, low, moderate, high and critical levels |
+| RustSec, locked Rust crates | **0 known vulnerability entries** |
+| RustSec informational warnings | **1 unsound + 4 unmaintained**; follow-up [issue #29](https://github.com/sanskarIN/EyeZen/issues/29) |
+
+The RustSec **unsound** warning flags `glib 0.18.5` ([RUSTSEC-2024-0429](https://rustsec.org/advisories/RUSTSEC-2024-0429.html)), relating to the `VariantStrIter` iterator implementation; the advisory lists 0.20.0+ as patched, but a major GTK-rs upgrade could be incompatible with existing Tauri/WebKit components. No claim is made that EyeZen reaches the affected API.
+
+**Unmaintained transitive dependencies** flagged: `proc-macro-error 1.0.4` (RUSTSEC-2024-0370), `zbus_names 4.3.4` (RUSTSEC-2026-0371), `zvariant 5.15.0` (RUSTSEC-2026-0370) and `zvariant_derive 5.15.0` (RUSTSEC-2026-0372). These are maintenance signals, not five confirmed exploitable vulnerabilities. Dependency paths, supported upstream upgrade options and maintainer risk acceptance remain open in [issue #29](https://github.com/sanskarIN/EyeZen/issues/29).
 
 ## Outstanding security acceptance (must not be falsely marked complete)
 
-- [ ] Run `npm audit --audit-level=high` from the locked candidate tree and review each finding, including dev-only scope.
-- [ ] Install `cargo-audit` in an appropriate Rust build environment and run `cargo audit --file src-tauri/Cargo.lock`. Review vulnerabilities and separately document unmaintained dependencies.
+- [x] Ran `npm audit --audit-level=high --json` from the locked tree and reviewed its report: zero findings, including dev-only scope ([run 40183649632](https://github.com/sanskarIN/EyeZen/actions/runs/40183649632)).
+- [x] Ran `cargo audit --file src-tauri/Cargo.lock --json` and reviewed its report: zero vulnerability entries, five informational warnings ([run 40183649632](https://github.com/sanskarIN/EyeZen/actions/runs/40183649632)).
+- [ ] Investigate RustSec unsoundness and unmaintained transitive crates; record explicit disposition before release signoff ([issue #29](https://github.com/sanskarIN/EyeZen/issues/29)).
 - [ ] Review dependency licenses and redistribution obligations, especially for native bundles and system libraries.
 - [ ] Confirm the release's permission scopes, CSP and locally opened overlay WebViews; avoid adding remote origins or wildcard privileges.
 - [ ] Confirm binary installation and clean uninstall on representative Windows, macOS and Linux systems.
