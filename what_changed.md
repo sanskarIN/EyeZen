@@ -1,4 +1,6 @@
-# EyeZen v1.2.1 candidate integration — October 25, 2026
+# EyeZen v1.2.1 released — October 25, 2026
+
+**Published:** [EyeZen v1.2.1](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.1), stable on GitHub with Windows MSI, macOS Apple Silicon DMG, Linux DEB/RPM and `SHA256SUMS.txt`. The [release publisher](https://github.com/sanskarIN/EyeZen/actions/runs/40185857118) completed successfully; a temporary merge-scoped release workflow was removed afterward. Unfinished real-device/accessibility QA and RustSec informational warnings remain in [#18](https://github.com/sanskarIN/EyeZen/issues/18) and [#29](https://github.com/sanskarIN/EyeZen/issues/29).
 
 **Release authorization (2026-10-25):** The maintainer explicitly approved publishing v1.2.1 after automated CI/audits and checksum checks. A one-time, merge-triggered publisher is scoped to the release PR and retains version/inventory/CI checks. **Device, assistive-technology and remaining RustSec warning disposition have not been tested/cleared and must remain open in issues #18 and #29.** No signing or verified hardware behavior is claimed.
 
