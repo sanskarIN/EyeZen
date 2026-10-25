@@ -85,6 +85,19 @@ test("refuses wrong platform, mismatched version and empty assets", async () => 
   });
 });
 
+test("rejects same-version installer files from a different product", async () => {
+  await fixture(async root => {
+    await rename(installer(root, "windows", "msi"),
+      path.join(group(root, "windows"), "OtherProduct_1.2.1_windows.msi"));
+    await assert.rejects(verifyReleaseAssets(root, "1.2.1"), /mismatched version/);
+  });
+  await fixture(async root => {
+    await rename(installer(root, "linux", "rpm"),
+      path.join(group(root, "linux"), "FakeEyeZen_1.2.1_linux.rpm"));
+    await assert.rejects(verifyReleaseAssets(root, "1.2.1"), /mismatched version/);
+  });
+});
+
 test("never follows symlinked release packages", async () => {
   await fixture(async root => {
     const filename = installer(root, "linux", "deb");
