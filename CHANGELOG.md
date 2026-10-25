@@ -5,6 +5,7 @@ All notable release changes will be documented here.
 ## [Unreleased] — v1.2.1 stabilization (pending checks)
 
 ### In preparation
+- Update Vite build tooling to patched v6.4.5 for GHSA-8g5g-mxqh-grgj; document the targeted review and outstanding npm/Cargo audits
 - Contain keyboard focus within first-run onboarding and restore prior focus when dismissed; add modal keyboard tests
 - Reject other-product installer filenames even if platform, version fragment and extension are plausible
 - Recover usable defaults when the primary settings file is missing and the previous backup is malformed or oversized, preserving the original file

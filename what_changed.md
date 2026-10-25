@@ -2,6 +2,9 @@
 
 **No stable release has been published:** v1.2.0 remains current.
 
+- Reviewed the targeted October 2026 Vite advisory; merged [security PR #27](https://github.com/sanskarIN/EyeZen/pull/27) after all four applicable PR CI checks passed. The v1.2.1 candidate now locks Vite 6.4.5 to avoid the affected 6.4.4 development-server build tool.
+- Full npm/Cargo dependency audits, assistive-technology acceptance, device tests and maintainer signoff remain open.
+
 - Merged PRs #14–#17, #19 and #20 after their completed PR CI checks.
 - Restored mobile web navigation, introduced preview installer artifacts and version consistency checks.
 - Protected desktop settings writes against oversized JSON and added fallback to validated previous backups when the primary settings file is corrupt, preserving invalid originals.
