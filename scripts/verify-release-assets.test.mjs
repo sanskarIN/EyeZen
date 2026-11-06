@@ -115,3 +115,25 @@ test("rejects invalid version argument without making output files", async () =>
     await assert.rejects(readFile(path.join(root, "SHA256SUMS.txt")), /ENOENT/);
   });
 });
+
+test("accepts a future release version without changing the verifier", async () => {
+  const version = "1.3.0";
+  const root = await mkdtemp(path.join(os.tmpdir(), "eyezen-next-release-"));
+  try {
+    for (const [platform, extensions] of Object.entries(GROUPS)) {
+      const directory = path.join(root, `eyezen-${version}-${platform}-unsigned`);
+      await mkdir(directory, { recursive: true });
+      for (const extension of extensions) {
+        await writeFile(path.join(directory, `EyeZen_${version}_${platform}.${extension}`),
+          `${platform}-${extension}`);
+      }
+    }
+    const result = await verifyReleaseAssets(root, version, true);
+    assert.equal(result.installers.length, 4);
+    assert.equal(result.checksums.trim().split("\\n").length, 4);
+    assert.ok(result.checksums.includes(`EyeZen_${version}_windows.msi`));
+    await assert.rejects(verifyReleaseAssets(root, "1.2.1"), /Missing required windows/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
