@@ -130,7 +130,7 @@ test("accepts a future release version without changing the verifier", async () 
     }
     const result = await verifyReleaseAssets(root, version, true);
     assert.equal(result.installers.length, 4);
-    assert.equal(result.checksums.trim().split("\\n").length, 4);
+    assert.equal(result.checksums.trim().split("\n").length, 4);
     assert.ok(result.checksums.includes(`EyeZen_${version}_windows.msi`));
     await assert.rejects(verifyReleaseAssets(root, "1.2.1"), /Missing required windows/);
   } finally {
