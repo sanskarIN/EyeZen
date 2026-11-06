@@ -21,12 +21,13 @@ The overlays are local transparent windows, with conservative alpha strength. Th
 - Turning Screen Comfort off, selecting **Color-accurate work**, and quitting/closing the main app remove the overlays.
 - The EyeZen tray offers **Disable screen comfort** for immediate removal. It prevents an automatic timer refresh from silently restoring tint; the preference must be turned off and then on to resume.
 - If an overlay cannot become click-through, be positioned, sized or rendered, EyeZen removes its overlays and reports an error.
+- Click-through is reasserted before showing **both new and previously existing tint windows** on each refresh. If the OS rejects it after a display/session change, EyeZen closes its tint windows rather than displaying a potentially input-blocking overlay.
 - Overlay refresh is active while the EyeZen process is running; it is not an OS service and does not modify hardware.
 - Wayland sessions are explicitly not supported because unprivileged apps generally cannot guarantee cross-app global overlays.
 - macOS transparency uses Tauri `macOSPrivateApi`, disallowing Mac App Store distribution through standard rules. This does not affect the standalone unsigned DMG build.
 
 ## Acceptance testing needed
 
-CI compilation and unit tests **are not proof of actual screen-overlay behavior** on real equipment. Tests on physical Windows/macOS/Linux desktop systems are needed for: single and mixed-DPI dual monitors, negative display coordinates, hot-plug, suspend/resume, color-critical workflows, clicks/typing through the overlay, fullscreen, cursor behavior, OS permission prompts, uninstall and crash cleanup.
+CI compilation and unit tests **are not proof of actual screen-overlay behavior** on real equipment. In particular, enable the tint, change monitor geometry or display scaling while it is active, wait for the next periodic refresh, and click/type through each reused overlay; then confirm the tray emergency stop works. If click-through fails, the overlay should disappear with an error instead of intercepting input. Tests on physical Windows/macOS/Linux desktop systems are needed for: single and mixed-DPI dual monitors, negative display coordinates, hot-plug, suspend/resume, color-critical workflows, clicks/typing through the overlay, fullscreen, cursor behavior, OS permission prompts, uninstall and crash cleanup.
 
 Read [v1.1.1 release notes](release-notes-v1.1.1.md) for the implementation boundaries.
