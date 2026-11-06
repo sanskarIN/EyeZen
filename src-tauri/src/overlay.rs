@@ -205,15 +205,17 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
                 })
                 .build()
                 .map_err(|e| format!("Cannot open overlay {index}: {e}"))?;
-                // Never expose an overlay that can intercept desktop input.
-                if let Err(error) = window.set_ignore_cursor_events(true) {
-                    let _ = window.close();
-                    return Err(format!(
-                        "Cannot enable click-through on display {index}: {error}"
-                    ));
-                }
                 window
             };
+            // Reassert click-through for *existing* overlays too. Repositioning
+            // and monitor/session changes must never expose a reused window that
+            // can intercept desktop input. Fail closed before making it visible.
+            if let Err(error) = window.set_ignore_cursor_events(true) {
+                let _ = window.close();
+                return Err(format!(
+                    "Cannot enable click-through on display {index}: {error}"
+                ));
+            }
             window
                 .set_position(PhysicalPosition::new(
                     monitor.position().x,
