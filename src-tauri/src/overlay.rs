@@ -18,6 +18,26 @@ pub struct OverlayState(pub Mutex<ComfortSettings>);
 /// Emergency tray dismissal stays effective even if the main UI is frozen.
 pub struct EmergencyOff(pub AtomicBool);
 
+impl EmergencyOff {
+    fn trip(&self) {
+        self.0.store(true, Ordering::SeqCst);
+    }
+
+    fn rearm(&self) {
+        self.0.store(false, Ordering::SeqCst);
+    }
+
+    fn engaged(&self) -> bool {
+        self.0.load(Ordering::SeqCst)
+    }
+}
+
+/// Only explicit UI enable actions may clear the emergency latch.
+/// A scheduled profile, queued refresh, or routine disabled-state sync must not.
+pub fn rearm_emergency_stop(app: &AppHandle) {
+    app.state::<EmergencyOff>().rearm();
+}
+
 /// Close-to-tray must not reactivate overlays from queued or periodic
 /// frontend refreshes while the main window is hidden.
 #[derive(Default)]
@@ -111,7 +131,7 @@ fn close_overlays(app: &AppHandle) {
 
 pub fn emergency_stop(app: &AppHandle) {
     if let Some(flag) = app.try_state::<EmergencyOff>() {
-        flag.0.store(true, Ordering::SeqCst);
+        flag.trip();
     }
     close_overlays(app);
 }
@@ -140,9 +160,8 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
     }
 
     if !settings.enabled {
-        if let Some(flag) = app.try_state::<EmergencyOff>() {
-            flag.0.store(false, Ordering::SeqCst);
-        }
+        // This is also called by asynchronous UI effects and schedules.
+        // Clearing EmergencyOff here would re-enable tint without user consent.
         close_overlays(&app);
         return Ok(OverlayResult {
             status: "disabled",
@@ -151,7 +170,7 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
         });
     }
 
-    if app.state::<EmergencyOff>().0.load(Ordering::SeqCst) {
+    if app.state::<EmergencyOff>().engaged() {
         close_overlays(&app);
         return Ok(OverlayResult {
             status: "disabled",
@@ -263,14 +282,19 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
                 .map_err(|e| format!("Cannot show display {index}: {e}"))?;
             // A close request can arrive while a refresh is still in flight.
             // Never let it resurrect tint windows after close-to-tray.
-            if main_is_hidden(&app) {
-                return Err("EyeZen was hidden during the overlay refresh.".into());
+            if main_is_hidden(&app) || app.state::<EmergencyOff>().engaged() {
+                return Err(
+                    "EyeZen was hidden or emergency-stopped during the overlay refresh.".into(),
+                );
             }
         }
         for (label, window) in app.webview_windows() {
             if is_stale_overlay(&label, monitors.len()) {
                 let _ = window.close();
             }
+        }
+        if main_is_hidden(&app) || app.state::<EmergencyOff>().engaged() {
+            return Err("EyeZen was hidden or emergency-stopped during the refresh.".into());
         }
         Ok(())
     })();
@@ -325,6 +349,20 @@ mod tests {
         assert!(is_stale_overlay("comfort-overlay-", 0));
         assert!(!is_stale_overlay("comfort-overlay-3", 4));
         assert!(is_stale_overlay("comfort-overlay-3", 3));
+    }
+
+    #[test]
+    fn emergency_stop_is_latched_until_explicit_rearm() {
+        let state = EmergencyOff::default();
+        assert!(!state.engaged());
+        state.trip();
+        assert!(state.engaged());
+        // A routine disabled-state refresh is not an authorization to rearm.
+        assert!(state.engaged());
+        state.rearm();
+        assert!(!state.engaged());
+        state.trip();
+        assert!(state.engaged());
     }
 
     #[test]

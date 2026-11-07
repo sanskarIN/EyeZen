@@ -27,6 +27,11 @@ export async function applyComfortOverlay(settings: ComfortSettings): Promise<Ov
   if (desktop) return invoke<OverlayResult>("apply_comfort_overlay", { settings });
   return { status: "unsupported", message: "Browser previews cannot alter other desktop windows.", displayCount: 0 };
 }
+/** Only an explicit screen-comfort enable gesture should call this. */
+export async function rearmEmergencyComfortStop(): Promise<void> {
+  if (desktop) await invoke("rearm_emergency_comfort_stop");
+}
+
 export async function requestDisplayAdjustment(): Promise<OperationResult> {
   return desktop ? invoke<OperationResult>("request_display_adjustment") :
     { status: "unsupported", message: "No display adjustment made: running a browser preview." };

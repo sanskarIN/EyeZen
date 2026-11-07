@@ -57,6 +57,13 @@ async fn apply_comfort_overlay(
 }
 
 #[tauri::command]
+fn rearm_emergency_comfort_stop(app: tauri::AppHandle) {
+    // This command is only called by the explicit UI comfort-enable gesture,
+    // never by a periodic refresh, profile automation, or state restoration.
+    overlay::rearm_emergency_stop(&app);
+}
+
+#[tauri::command]
 fn request_display_adjustment() -> OperationResult {
     platform::apply_display_settings()
 }
@@ -147,7 +154,8 @@ pub fn run() {
             get_platform_report,
             request_display_adjustment,
             matching_schedule,
-            apply_comfort_overlay
+            apply_comfort_overlay,
+            rearm_emergency_comfort_stop
         ])
         .run(tauri::generate_context!())
         .expect("unable to start EyeZen");

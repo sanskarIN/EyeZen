@@ -10,7 +10,7 @@ import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import type { ComfortProfile, EyeZenState, OverlayResult, PlatformReport, ScheduleRule } from "./types";
 import { createDefaults, newBreaks, newComfort, themes } from "./defaults";
 import { APP_VERSION } from "./version";
-import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, requestDesktopNotificationPermission, requestWebNotificationPermission, saveState } from "./services/native";
+import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, rearmEmergencyComfortStop, requestDesktopNotificationPermission, requestWebNotificationPermission, saveState } from "./services/native";
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
 import { clearWebState, readRawWebState } from "./services/web-storage";
 import { validTime } from "./services/schedule";
@@ -58,6 +58,7 @@ export default function App() {
   const [report, setReport] = useState<PlatformReport | null>(null);
   const [overlayStatus, setOverlayStatus] = useState<OverlayResult | null>(null);
   const overlayQueue = useRef<Promise<void>>(Promise.resolve());
+  const comfortGestureSequence = useRef(0);
   const [screen, setScreen] = useState<Screen>("dashboard");
   const onboardingDialog = useRef<HTMLElement | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<string>("productivity");
@@ -108,6 +109,8 @@ export default function App() {
   useEffect(() => {
     if (!desktop) return;
     const onEmergencyOff = () => {
+      // Cancel any pending enable gesture before it races the tray emergency stop.
+      comfortGestureSequence.current += 1;
       change(current => ({ ...current, comfort: { ...current.comfort, enabled: false } }));
       setOverlayStatus({
         status: "disabled", displayCount: 0,
@@ -201,6 +204,23 @@ export default function App() {
     setData(previous => previous ? updater(previous) : previous);
   }
   function patch(partial: Partial<EyeZenState>) { change(s => ({ ...s, ...partial })); }
+  async function setComfortEnabledByUser(enabled: boolean) {
+    const gesture = ++comfortGestureSequence.current;
+    if (!enabled) {
+      change(s => ({ ...s, comfort: { ...s.comfort, enabled: false } }));
+      return;
+    }
+    try {
+      // Scheduled profiles and periodic refreshes must never clear the latch.
+      await rearmEmergencyComfortStop();
+      if (gesture !== comfortGestureSequence.current) return;
+      change(s => ({ ...s, comfort: { ...s.comfort, enabled: true } }));
+    } catch (error) {
+      if (gesture === comfortGestureSequence.current) {
+        setNotification("Unable to re-enable screen comfort: " + String(error));
+      }
+    }
+  }
   function applyProfile(id: string, manual = true) {
     change(s => activateProfile(s, id, manual));
     setSelectedProfile(id);
@@ -505,7 +525,7 @@ export default function App() {
             <Panel title="Quick comfort controls" description="Opt-in visual tint on all detected monitors where supported.">
               <Toggle label="Comfort preferences" checked={data.comfort.enabled}
                 description={displayAvailable ? "Opt-in visual tint across detected screens" : "No supported screen overlay in this session"}
-                onChange={enabled => patch({ comfort: { ...data.comfort, enabled } })}/>
+                onChange={enabled => void setComfortEnabledByUser(enabled)}/>
               <Range title="Preferred warmth" value={data.comfort.warmth} min={0} max={100} suffix="%"
                 onChange={warmth => patch({ comfort: { ...data.comfort, warmth } })}/>
               <div className="inline-note"><Info size={17}/> {displayAvailable ? "An overlay changes how your desktop looks; monitor hardware is not modified." : "No desktop-wide tint was applied by this backend."}</div>
@@ -524,7 +544,7 @@ export default function App() {
         {screen === "comfort" && <div className="two-col">
           <Panel title="Desktop-wide screen comfort" description="Opt-in visual tint and dimming across detected monitors. Hardware calibration remains untouched.">
             <Toggle label="Enable screen comfort on all displays" checked={data.comfort.enabled}
-              onChange={enabled => patch({ comfort: { ...data.comfort, enabled } })}
+              onChange={enabled => void setComfortEnabledByUser(enabled)}
               description="Uses click-through overlays where supported. Does not change physical brightness or calibrated color temperature." />
             <Range title="Warm color preference" value={data.comfort.warmth} min={0} max={100} suffix="%"
               onChange={warmth => patch({ comfort: { ...data.comfort, warmth } })}/>
@@ -750,7 +770,7 @@ export default function App() {
               <button className="secondary-btn" onClick={() => patch({ onboardingComplete: false })}>Show again</button></div>
             <div className="setting-line"><div><strong>Reset all preferences</strong><p className="muted">Restore built-in profiles and themes</p></div>
               <button className="danger-btn" onClick={() => { if (window.confirm("Reset all EyeZen preferences?")) setData({ ...createDefaults(), onboardingComplete: true }); }}>Reset</button></div>
-            {desktop && <div className="inline-note"><Info size={17}/> When a tray icon is available, closing this window hides EyeZen in the tray and switches off screen tint. Use “Open EyeZen” to reopen or “Quit EyeZen” to exit. Browser windows are unaffected.</div>}
+            {desktop && <div className="inline-note"><Info size={17}/> When a tray icon is available, closing this window hides EyeZen in the tray and switches off screen tint. Emergency stop remains active until you explicitly switch screen comfort on again. Use “Open EyeZen” to reopen or “Quit EyeZen” to exit. Browser windows are unaffected.</div>}
           </Panel>
           <Panel title="Backup & shortcuts" description="Your configuration is under your control.">
             <div className="button-row"><button className="secondary-btn" onClick={() => exportJson(data, "eyezen-settings.json")}>
