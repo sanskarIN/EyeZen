@@ -20,6 +20,56 @@ export function npmVulnerabilityCounts(report, scope) {
   }));
 }
 
+/** Escape untrusted registry-returned text before adding it to a Markdown table. */
+function safeCell(value) {
+  return String(value).slice(0, 180).replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\r?\n|\r/g, " ").replace(/\|/g, "\\|");
+}
+
+/** Preserve package-level evidence alongside severity counts in CI summaries. */
+export function npmVulnerabilityRows(report, scope) {
+  const counts = npmVulnerabilityCounts(report, scope);
+  const vulnerabilities = report?.vulnerabilities;
+  if (!vulnerabilities || typeof vulnerabilities !== "object" || Array.isArray(vulnerabilities)) {
+    throw new Error("Missing vulnerability package details in " + scope + " npm audit report.");
+  }
+  const entries = Object.entries(vulnerabilities);
+  if (Object.values(counts).some(count => count > 0) && entries.length === 0) {
+    throw new Error("Nonzero advisory counts without package details in " + scope + " report.");
+  }
+  return entries.map(([name, detail]) => {
+    if (!detail || typeof detail !== "object" || !LEVELS.includes(detail.severity)) {
+      throw new Error("Invalid vulnerability package detail in " + scope + " report.");
+    }
+    const dependency = detail.isDirect === true ? "Direct" :
+      detail.isDirect === false ? "Transitive" : "Unknown";
+    const fix = detail.fixAvailable === false ? "Not offered by npm" :
+      detail.fixAvailable === true ? "Offered by npm" :
+      detail.fixAvailable && typeof detail.fixAvailable === "object" &&
+        typeof detail.fixAvailable.name === "string" &&
+        typeof detail.fixAvailable.version === "string" ?
+        "Update " + detail.fixAvailable.name + "@" + detail.fixAvailable.version +
+        (detail.fixAvailable.isSemVerMajor === true ? " (major)" : "") : "Not specified";
+    return { name, severity: detail.severity, dependency, fix };
+  }).sort((a, b) => LEVELS.indexOf(a.severity) - LEVELS.indexOf(b.severity) ||
+    a.name.localeCompare(b.name, "en"));
+}
+
+function packageTable(scope, entries) {
+  if (!entries.length) return ["", "**" + scope + ":** No affected packages reported."];
+  return [
+    "",
+    "**" + scope + "**",
+    "",
+    "| Package | Severity | Dependency | npm remediation |",
+    "| --- | --- | --- | --- |",
+    ...entries.map(entry => "| " + [
+      entry.name, entry.severity, entry.dependency, entry.fix,
+    ].map(safeCell).join(" | ") + " |"),
+  ];
+}
+
 /** Differentiate dev tooling advisories from packages shipped to users. */
 export function summarizeNpmAudits(allReport, productionReport) {
   const all = npmVulnerabilityCounts(allReport, "all-dependency");
@@ -32,8 +82,10 @@ export function summarizeNpmAudits(allReport, productionReport) {
     "| --- | ---: | ---: | ---: | ---: | ---: |",
     row("All dependencies (including development tools)", all),
     row("Production dependencies only", production),
+    ...packageTable("All-dependency affected packages", npmVulnerabilityRows(allReport, "all-dependency")),
+    ...packageTable("Production-only affected packages", npmVulnerabilityRows(productionReport, "production-only")),
     "",
-    "High/critical advisories fail the corresponding npm audit step. Moderate/low findings remain visible, not automatically cleared. Production-only results do not prove development tools are safe to process untrusted input.",
+    "High/critical advisories fail the corresponding npm audit step. Moderate/low findings remain visible, not automatically cleared. An npm-reported fix is not proof that the update is compatible, that Dependabot can resolve it, or that affected code is reachable. Production-only results do not prove development tools are safe to process untrusted input.",
     "",
   ].join("\n");
 }
