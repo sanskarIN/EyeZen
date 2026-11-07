@@ -426,6 +426,29 @@ mod tests {
     }
 
     #[test]
+    fn racing_close_and_rearm_never_leave_hidden_comfort_armed() {
+        use std::sync::Barrier;
+        for _ in 0..64 {
+            let hidden = MainWindowHidden::default();
+            let emergency = EmergencyOff::default();
+            let barrier = Barrier::new(3);
+            std::thread::scope(|scope| {
+                scope.spawn(|| {
+                    barrier.wait();
+                    mark_main_hidden(&hidden, &emergency, true);
+                });
+                scope.spawn(|| {
+                    barrier.wait();
+                    let _ = rearm_if_visible(&hidden, &emergency);
+                });
+                barrier.wait();
+            });
+            assert!(hidden.0.load(Ordering::SeqCst));
+            assert!(emergency.engaged());
+        }
+    }
+
+    #[test]
     fn normal_visible_window_does_not_latch_emergency_stop() {
         let hidden = MainWindowHidden::default();
         let emergency = EmergencyOff::default();
