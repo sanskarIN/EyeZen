@@ -190,10 +190,32 @@ jobs:
         env:
           VERSION: ${{ steps.development.outputs.version }}
         run: node scripts/verify-release-assets.mjs verified "$VERSION"
-      - name: Upload verified development checksums
+      - name: Record preview provenance (never the stable release)
+        shell: bash
+        env:
+          VERSION: ${{ steps.development.outputs.version }}
+        run: |
+          set -euo pipefail
+          {
+            echo "EyeZen development preview — unsigned, not a stable release"
+            echo "Source commit: ${GITHUB_SHA}"
+            echo "Workflow: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "Embedded application version: ${VERSION}"
+            echo "Packages: Windows MSI, macOS DMG, Linux DEB and RPM"
+          } > verified/BUILD_INFO.txt
+          {
+            echo "### Development installer preview"
+            echo ""
+            echo "This run generated unsigned **development preview** installers for commit \`${GITHUB_SHA}\` (embedded version \`${VERSION}\`)."
+            echo "Download the three platform archives and the checksums archive from this run's Artifacts list."
+            echo "**Not a published stable EyeZen release.**"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload verified development checksums and source identity
         uses: actions/upload-artifact@v4
         with:
           name: eyezen-dev-${{ github.run_id }}-${{ github.sha }}-checksums
-          path: verified/SHA256SUMS.txt
+          path: |
+            verified/SHA256SUMS.txt
+            verified/BUILD_INFO.txt
           if-no-files-found: error
           retention-days: 7
