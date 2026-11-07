@@ -10,6 +10,8 @@ Stable releases are published only after passing automated CI and applicable man
 4. Download the appropriate `eyezen-preview-pr-<number>-<runner>` archive; extract it.
 5. Review the archive contents before installing. Typical platform packages are Windows `.msi`, macOS `.dmg`, Linux `.deb` or `.rpm`.
 
+Use a branch named `release/vX.Y.Z` or `release/vX.Y.Z-description` (the `v` prefix is optional), where `X.Y.Z` matches `package.json` and all native/frontend version manifests. The installer verification job checks both the branch/version match and manifests before accepting the downloaded packages. This prevents mixing installers from different releases.
+
 Artifacts are retained for **7 days** and appear only after their respective platform CI job has completed successfully. On internal release-candidate pull requests, a separate **Verify release-candidate installer inventory** job also checks the downloaded MSI, DMG, DEB and RPM files and retains a companion `eyezen-preview-pr-<number>-checksums` artifact. The aggregate check must pass before treating the candidate packaging matrix as complete. GitHub may require a signed-in account to download workflow artifacts. CI does not currently code-sign or notarize these preview installers; treat them as test builds and do not redistribute them as stable software.
 
 ## Required manual checks
@@ -28,7 +30,7 @@ Do not mark **hardware compatibility verified** simply because GitHub Actions bu
 
 When a candidate passes device acceptance, the separate manual release workflow must require one MSI, one DMG, one DEB and one RPM. Its release artifact verifier detects missing/duplicate or unexpected platform bundles and generates SHA-256 checksums against **asset basenames** (not temporary CI directory paths). It also requires package filenames to begin with the official `EyeZen_` or `EyeZen-` name and the exact requested version; renaming an unrelated installer to a valid-looking artifact is not a substitute for signing, provenance or binary identity verification. After downloading all four eventual release installers and `SHA256SUMS.txt` into one directory, run `sha256sum -c SHA256SUMS.txt` on Linux or a compatible checksum tool. Passing hashes verifies file integrity against the published manifest, not signing, provenance, or hardware safety.
 
-The check can be exercised without publishing a release using `node scripts/verify-release-assets.mjs <artifacts-directory> 1.2.1` against a directory with the three artifact groups. The existing Vitest suite contains synthetic missing/duplicate/version/checksum regression tests.
+The check can be exercised without publishing a release using `node scripts/verify-release-assets.mjs <artifacts-directory> X.Y.Z` against a directory with the three artifact groups named for the same version (`eyezen-X.Y.Z-windows-unsigned`, `eyezen-X.Y.Z-macos-unsigned`, and `eyezen-X.Y.Z-linux-unsigned`). The existing Vitest suite contains synthetic missing/duplicate/version/checksum regression tests.
 
 ## Scope and security
 

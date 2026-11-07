@@ -101,16 +101,42 @@ jobs:
           pattern: eyezen-preview-pr-${{ github.event.pull_request.number }}-*
           path: input
           merge-multiple: false
+      - name: Resolve and check the release candidate version
+        id: candidate
+        shell: bash
+        env:
+          RELEASE_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          npm run check:versions
+          version="$(node -p "require('./package.json').version")"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Expected numeric X.Y.Z version in package.json"
+            exit 1
+          fi
+          # Only a release branch for this exact version may supply candidates.
+          case "$RELEASE_BRANCH" in
+            "release/v${version}" | "release/v${version}-"* | "release/${version}" | "release/${version}-"*) ;;
+            *)
+              echo "::error::Release branch $RELEASE_BRANCH does not match package version $version"
+              exit 1
+              ;;
+          esac
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: Arrange bundles by release platform
         shell: bash
+        env:
+          VERSION: ${{ steps.candidate.outputs.version }}
         run: |
           set -euo pipefail
           mkdir -p verified
-          mv "input/eyezen-preview-pr-${{ github.event.pull_request.number }}-windows-latest" verified/eyezen-1.2.1-windows-unsigned
-          mv "input/eyezen-preview-pr-${{ github.event.pull_request.number }}-macos-latest" verified/eyezen-1.2.1-macos-unsigned
-          mv "input/eyezen-preview-pr-${{ github.event.pull_request.number }}-ubuntu-24.04" verified/eyezen-1.2.1-linux-unsigned
+          mv "input/eyezen-preview-pr-${{ github.event.pull_request.number }}-windows-latest" "verified/eyezen-${VERSION}-windows-unsigned"
+          mv "input/eyezen-preview-pr-${{ github.event.pull_request.number }}-macos-latest" "verified/eyezen-${VERSION}-macos-unsigned"
+          mv "input/eyezen-preview-pr-${{ github.event.pull_request.number }}-ubuntu-24.04" "verified/eyezen-${VERSION}-linux-unsigned"
       - name: Require MSI, DMG, DEB, RPM with portable SHA-256 manifest
-        run: node scripts/verify-release-assets.mjs verified 1.2.1
+        env:
+          VERSION: ${{ steps.candidate.outputs.version }}
+        run: node scripts/verify-release-assets.mjs verified "$VERSION"
       - name: Retain preview checksums for manual testers
         uses: actions/upload-artifact@v4
         with:
