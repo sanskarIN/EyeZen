@@ -32,22 +32,50 @@ impl EmergencyOff {
     }
 }
 
-/// Only explicit UI enable actions may clear the emergency latch.
-/// A scheduled profile, queued refresh, or routine disabled-state sync must not.
-pub fn rearm_emergency_stop(app: &AppHandle) {
-    app.state::<EmergencyOff>().rearm();
-}
-
 /// Close-to-tray must not reactivate overlays from queued or periodic
 /// frontend refreshes while the main window is hidden.
 #[derive(Default)]
 pub struct MainWindowHidden(pub AtomicBool);
 
-pub fn set_main_hidden(app: &AppHandle, hidden: bool) {
-    if let Some(flag) = app.try_state::<MainWindowHidden>() {
-        flag.0.store(hidden, Ordering::SeqCst);
+fn mark_main_hidden(hidden: &MainWindowHidden, emergency: &EmergencyOff, is_hidden: bool) {
+    // Store hidden first, then latch. A concurrent explicit rearm must fail if
+    // this close arrives during its native command.
+    hidden.0.store(is_hidden, Ordering::SeqCst);
+    if is_hidden {
+        emergency.trip();
     }
-    if hidden {
+}
+
+fn rearm_if_visible(hidden: &MainWindowHidden, emergency: &EmergencyOff) -> bool {
+    if hidden.0.load(Ordering::SeqCst) {
+        return false;
+    }
+    emergency.rearm();
+    // A close could begin during rearm. Preserve the safety latch in that race.
+    if hidden.0.load(Ordering::SeqCst) {
+        emergency.trip();
+        return false;
+    }
+    true
+}
+
+/// Only an explicit UI enable action can clear the emergency latch. Reopening
+/// the tray window and profile automation are not authorization to rearm it.
+pub fn rearm_emergency_stop(app: &AppHandle) -> Result<(), String> {
+    let hidden = app.state::<MainWindowHidden>();
+    let emergency = app.state::<EmergencyOff>();
+    if rearm_if_visible(&hidden, &emergency) {
+        Ok(())
+    } else {
+        Err("Open EyeZen before re-enabling screen comfort.".into())
+    }
+}
+
+pub fn set_main_hidden(app: &AppHandle, is_hidden: bool) {
+    let hidden = app.state::<MainWindowHidden>();
+    let emergency = app.state::<EmergencyOff>();
+    mark_main_hidden(&hidden, &emergency, is_hidden);
+    if is_hidden {
         close_overlays(app);
     }
 }
@@ -366,13 +394,67 @@ mod tests {
     }
 
     #[test]
-    fn main_window_starts_visible_and_hidden_guard_is_explicit() {
-        let state = MainWindowHidden::default();
-        assert!(!state.0.load(Ordering::SeqCst));
-        state.0.store(true, Ordering::SeqCst);
-        assert!(state.0.load(Ordering::SeqCst));
-        state.0.store(false, Ordering::SeqCst);
-        assert!(!state.0.load(Ordering::SeqCst));
+    fn close_to_tray_latches_emergency_off_even_after_reopen() {
+        let hidden = MainWindowHidden::default();
+        let emergency = EmergencyOff::default();
+        assert!(!emergency.engaged());
+
+        mark_main_hidden(&hidden, &emergency, true);
+        assert!(hidden.0.load(Ordering::SeqCst));
+        assert!(emergency.engaged());
+
+        mark_main_hidden(&hidden, &emergency, false);
+        assert!(!hidden.0.load(Ordering::SeqCst));
+        assert!(emergency.engaged());
+        assert!(rearm_if_visible(&hidden, &emergency));
+        assert!(!emergency.engaged());
+    }
+
+    #[test]
+    fn rearm_rejects_hidden_window_and_remains_latched() {
+        let hidden = MainWindowHidden::default();
+        let emergency = EmergencyOff::default();
+
+        mark_main_hidden(&hidden, &emergency, true);
+        assert!(!rearm_if_visible(&hidden, &emergency));
+        assert!(emergency.engaged());
+
+        mark_main_hidden(&hidden, &emergency, false);
+        assert!(emergency.engaged());
+        // Restoring the main UI does not implicitly enable tint.
+        assert!(!hidden.0.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn racing_close_and_rearm_never_leave_hidden_comfort_armed() {
+        use std::sync::Barrier;
+        for _ in 0..64 {
+            let hidden = MainWindowHidden::default();
+            let emergency = EmergencyOff::default();
+            let barrier = Barrier::new(3);
+            std::thread::scope(|scope| {
+                scope.spawn(|| {
+                    barrier.wait();
+                    mark_main_hidden(&hidden, &emergency, true);
+                });
+                scope.spawn(|| {
+                    barrier.wait();
+                    let _ = rearm_if_visible(&hidden, &emergency);
+                });
+                barrier.wait();
+            });
+            assert!(hidden.0.load(Ordering::SeqCst));
+            assert!(emergency.engaged());
+        }
+    }
+
+    #[test]
+    fn normal_visible_window_does_not_latch_emergency_stop() {
+        let hidden = MainWindowHidden::default();
+        let emergency = EmergencyOff::default();
+        mark_main_hidden(&hidden, &emergency, false);
+        assert!(!hidden.0.load(Ordering::SeqCst));
+        assert!(!emergency.engaged());
     }
 
     #[test]
