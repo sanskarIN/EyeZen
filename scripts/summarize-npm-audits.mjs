@@ -85,7 +85,7 @@ export function summarizeNpmAudits(allReport, productionReport) {
     ...packageTable("All-dependency affected packages", npmVulnerabilityRows(allReport, "all-dependency")),
     ...packageTable("Production-only affected packages", npmVulnerabilityRows(productionReport, "production-only")),
     "",
-    "High/critical advisories fail the corresponding npm audit step. Moderate/low findings remain visible, not automatically cleared. Production-only results do not prove development tools are safe to process untrusted input.",
+    "High/critical advisories fail the corresponding npm audit step. Moderate/low findings remain visible, not automatically cleared. An npm-reported fix is not proof that the update is compatible, that Dependabot can resolve it, or that affected code is reachable. Production-only results do not prove development tools are safe to process untrusted input.",
     "",
   ].join("\n");
 }
