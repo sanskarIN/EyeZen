@@ -10,6 +10,7 @@ on:
       - 'package-lock.json'
       - 'src-tauri/Cargo.toml'
       - 'src-tauri/Cargo.lock'
+      - 'scripts/summarize-npm-audits*.mjs'
       - '.github/workflows/security-audit.yml'
   push:
     branches: [main]
@@ -18,6 +19,7 @@ on:
       - 'package-lock.json'
       - 'src-tauri/Cargo.toml'
       - 'src-tauri/Cargo.lock'
+      - 'scripts/summarize-npm-audits*.mjs'
       - '.github/workflows/security-audit.yml'
   schedule:
     - cron: '17 3 * * 1'
