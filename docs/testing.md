@@ -21,6 +21,17 @@ Rust: default state validation, active profile references, invalid break interva
 
 TypeScript/Vitest: overnight matching, conflict tie-breaking, quiet-hours and invalid clock syntax.
 
+## Dependency advisory checks
+
+The separate [security-audit workflow](../.github/workflows/security-audit.yml) runs on relevant dependency changes, a weekly schedule, or manual dispatch. Its npm job runs two independent checks of the **locked** dependency graph:
+
+- **All npm dependencies:** Includes the build, lint, TypeScript, and test tooling used during development and packaging.
+- **Production npm dependencies only:** Uses `npm audit --omit=dev` to distinguish advisories in shipped application dependencies from development-tooling findings.
+
+Both reports are retained together as the `eyezen-npm-audit` artifact, with separate counts in the workflow summary. High/critical advisories fail their respective audit step. Moderate and low findings remain visible but do not automatically fail this threshold; they still require assessment. A clean production-only report **does not** prove that affected development tooling is safe to run on untrusted inputs. Missing or malformed audit data fails report summarization rather than being misreported as zero vulnerabilities.
+
+RustSec findings are reported separately for `Cargo.lock`; unmaintained or unsoundness warnings require target-specific assessment. Track the current transitive npm advisory in [issue #37](https://github.com/sanskarIN/EyeZen/issues/37) and RustSec warnings in [issue #29](https://github.com/sanskarIN/EyeZen/issues/29). Neither audit is a substitute for the real-device acceptance requirements below.
+
 ## Additional manual tests required
 
 - Install and launch packaged artifacts on each OS.
