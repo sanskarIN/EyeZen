@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      preview_installers:
+        description: 'Retain unsigned main-branch development installers and verify their checksums (not a release)'
+        type: boolean
+        default: false
+        required: false
 
 concurrency:
   group: eyezen-ci-${{ github.ref }}
@@ -78,6 +84,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: eyezen-preview-pr-${{ github.event.pull_request.number }}-${{ matrix.os }}
+          path: src-tauri/target/release/bundle/**
+          if-no-files-found: error
+          retention-days: 7
+      - name: Retain main-branch development installers (opt-in only)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.preview_installers }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyezen-dev-${{ github.run_id }}-${{ github.sha }}-${{ matrix.os }}
           path: src-tauri/target/release/bundle/**
           if-no-files-found: error
           retention-days: 7
