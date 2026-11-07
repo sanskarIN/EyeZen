@@ -12,6 +12,8 @@ Stable releases are published only after passing automated CI and applicable man
 
 Use a branch named `release/vX.Y.Z` or `release/vX.Y.Z-description` (the `v` prefix is optional), where `X.Y.Z` matches `package.json` and all native/frontend version manifests. The installer verification job checks both the branch/version match and manifests before accepting the downloaded packages. This prevents mixing installers from different releases.
 
+The guard is independently tested in `scripts/check-release-branch.test.mjs` and used by the packaging inventory job via `scripts/check-release-branch.mjs`. A description suffix must contain letters, digits, dots, underscores or hyphens, starting with a letter or digit; nested branch paths and empty suffixes are rejected. Before opening a release-candidate PR, run `node scripts/check-release-branch.mjs release/vX.Y.Z X.Y.Z` with the intended actual version.
+
 Artifacts are retained for **7 days** and appear only after their respective platform CI job has completed successfully. On internal release-candidate pull requests, a separate **Verify release-candidate installer inventory** job also checks the downloaded MSI, DMG, DEB and RPM files and retains a companion `eyezen-preview-pr-<number>-checksums` artifact. The aggregate check must pass before treating the candidate packaging matrix as complete. GitHub may require a signed-in account to download workflow artifacts. CI does not currently code-sign or notarize these preview installers; treat them as test builds and do not redistribute them as stable software.
 
 ## Required manual checks
