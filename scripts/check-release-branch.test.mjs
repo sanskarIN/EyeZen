@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
+import { URL, fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { matchesReleaseBranch } from "./check-release-branch.mjs";
 
