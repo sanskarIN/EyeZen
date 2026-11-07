@@ -56,6 +56,8 @@ RustSec findings are reported separately for `Cargo.lock`; unmaintained or unsou
 
 ## Evidence requirements
 
+To test a newer merged development commit rather than the already-published stable v1.2.1 installer, use the opt-in main-branch [development preview workflow](preview-installers.md#opt-in-development-preview-from-current-main). Record the **full commit SHA**, Actions run ID and `BUILD_INFO.txt` alongside the OS and observed outcome. Do not mistake unchanged embedded version metadata for a fresh stable release or claim an older stable installer contains subsequent PR fixes.
+
 A passing frontend job establishes only the specific scripts that ran. A passing Rust CI build verifies compilation/tests on that runner; it does not prove control of physical hardware. Test records should include commit SHA, OS version, hardware, check executed, observed behavior, and remaining blockers.
 
 Stable tags should not be created when release-critical checks are incomplete.
