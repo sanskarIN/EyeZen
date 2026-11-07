@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      preview_installers:
+        description: 'Retain unsigned main-branch development installers and verify their checksums (not a release)'
+        type: boolean
+        default: false
+        required: false
 
 concurrency:
   group: eyezen-ci-${{ github.ref }}
@@ -81,6 +87,14 @@ jobs:
           path: src-tauri/target/release/bundle/**
           if-no-files-found: error
           retention-days: 7
+      - name: Retain main-branch development installers (opt-in only)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.preview_installers }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyezen-dev-${{ github.run_id }}-${{ github.sha }}-${{ matrix.os }}
+          path: src-tauri/target/release/bundle/**
+          if-no-files-found: error
+          retention-days: 7
 
   preview-packages:
     name: Verify release-candidate installer inventory
@@ -132,5 +146,76 @@ jobs:
         with:
           name: eyezen-preview-pr-${{ github.event.pull_request.number }}-checksums
           path: verified/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  preview-development-packages:
+    name: Verify opt-in development installers
+    needs: [frontend, rust]
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.preview_installers }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate version manifests at the checked-out SHA
+        id: development
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run check:versions
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Download unsigned packages built by this exact run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: eyezen-dev-${{ github.run_id }}-${{ github.sha }}-*
+          path: input
+          merge-multiple: false
+      - name: Arrange packages by platform and recorded version
+        shell: bash
+        env:
+          ARTIFACT_PREFIX: eyezen-dev-${{ github.run_id }}-${{ github.sha }}
+          VERSION: ${{ steps.development.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p verified
+          mv "input/${ARTIFACT_PREFIX}-windows-latest" "verified/eyezen-${VERSION}-windows-unsigned"
+          mv "input/${ARTIFACT_PREFIX}-macos-latest" "verified/eyezen-${VERSION}-macos-unsigned"
+          mv "input/${ARTIFACT_PREFIX}-ubuntu-24.04" "verified/eyezen-${VERSION}-linux-unsigned"
+      - name: Require MSI, DMG, DEB, RPM and generate portable SHA-256 manifest
+        env:
+          VERSION: ${{ steps.development.outputs.version }}
+        run: node scripts/verify-release-assets.mjs verified "$VERSION"
+      - name: Record preview provenance (never the stable release)
+        shell: bash
+        env:
+          VERSION: ${{ steps.development.outputs.version }}
+        run: |
+          set -euo pipefail
+          {
+            echo "EyeZen development preview — unsigned, not a stable release"
+            echo "Source commit: ${GITHUB_SHA}"
+            echo "Workflow: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "Embedded application version: ${VERSION}"
+            echo "Packages: Windows MSI, macOS DMG, Linux DEB and RPM"
+          } > verified/BUILD_INFO.txt
+          {
+            echo "### Development installer preview"
+            echo ""
+            echo "This run generated unsigned **development preview** installers for commit \`${GITHUB_SHA}\` (embedded version \`${VERSION}\`)."
+            echo "Download the three platform archives and the checksums archive from this run's Artifacts list."
+            echo "**Not a published stable EyeZen release.**"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload verified development checksums and source identity
+        uses: actions/upload-artifact@v4
+        with:
+          name: eyezen-dev-${{ github.run_id }}-${{ github.sha }}-checksums
+          path: |
+            verified/SHA256SUMS.txt
+            verified/BUILD_INFO.txt
           if-no-files-found: error
           retention-days: 7
