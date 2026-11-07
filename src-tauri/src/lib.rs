@@ -129,9 +129,8 @@ pub fn run() {
                     if window.hide().is_ok() {
                         api.prevent_close();
                         if let Some(main) = app.get_webview_window("main") {
-                            let _ = main.eval(
-                                "window.dispatchEvent(new Event('eyezen:comfort-off'))",
-                            );
+                            let _ =
+                                main.eval("window.dispatchEvent(new Event('eyezen:comfort-off'))");
                         }
                         return;
                     }
@@ -153,7 +152,6 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("unable to start EyeZen");
 }
-
 
 #[cfg(test)]
 mod tests {
