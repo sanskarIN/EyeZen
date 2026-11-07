@@ -110,18 +110,8 @@ jobs:
           set -euo pipefail
           npm run check:versions
           version="$(node -p "require('./package.json').version")"
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Expected numeric X.Y.Z version in package.json"
-            exit 1
-          fi
-          # Only a release branch for this exact version may supply candidates.
-          case "$RELEASE_BRANCH" in
-            "release/v${version}" | "release/v${version}-"* | "release/${version}" | "release/${version}-"*) ;;
-            *)
-              echo "::error::Release branch $RELEASE_BRANCH does not match package version $version"
-              exit 1
-              ;;
-          esac
+          # Tested guard: refuse a missing, malformed or mismatched release branch.
+          node scripts/check-release-branch.mjs "$RELEASE_BRANCH" "$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: Arrange bundles by release platform
         shell: bash
