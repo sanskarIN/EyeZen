@@ -57,10 +57,11 @@ async fn apply_comfort_overlay(
 }
 
 #[tauri::command]
-fn rearm_emergency_comfort_stop(app: tauri::AppHandle) {
+fn rearm_emergency_comfort_stop(app: tauri::AppHandle) -> Result<(), String> {
     // This command is only called by the explicit UI comfort-enable gesture,
     // never by a periodic refresh, profile automation, or state restoration.
-    overlay::rearm_emergency_stop(&app);
+    // Native code rejects a late rearm if the window is hidden in the tray.
+    overlay::rearm_emergency_stop(&app)
 }
 
 #[tauri::command]
@@ -100,10 +101,22 @@ pub fn run() {
                     .on_menu_event(|app, event| match event.id().as_ref() {
                         "open" => {
                             if let Some(window) = app.get_webview_window("main") {
+                                let was_hidden = app
+                                    .state::<overlay::MainWindowHidden>()
+                                    .0
+                                    .load(Ordering::SeqCst);
                                 if window.show().is_ok() {
                                     overlay::set_main_hidden(app, false);
                                     let _ = window.unminimize();
                                     let _ = window.set_focus();
+                                    // A schedule may have changed the hidden UI settings.
+                                    // Ensure the control shows "off" after tray restoration,
+                                    // without affecting an already-visible main window.
+                                    if was_hidden {
+                                        let _ = window.eval(
+                                            "window.dispatchEvent(new Event('eyezen:comfort-off'))",
+                                        );
+                                    }
                                 }
                             }
                         }
