@@ -41,37 +41,24 @@ jobs:
         with:
           node-version: '22'
       - name: Validate locked npm dependency resolution
+        id: install
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Audit all locked npm packages (fail on high/critical)
         run: npm audit --audit-level=high --json > npm-audit.json
-      - name: Summarize npm findings
+      - name: Audit production-only packages (fail on high/critical)
+        if: ${{ always() && steps.install.outcome == 'success' }}
+        run: npm audit --omit=dev --audit-level=high --json > npm-production-audit.json
+      - name: Summarize both npm dependency scopes
         if: always()
-        shell: bash
-        run: |
-          if [ ! -s npm-audit.json ]; then
-            echo 'No npm audit result produced; audit unavailable or failed.' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          node --input-type=module -e '
-            import { readFileSync, appendFileSync } from "node:fs";
-            try {
-              const result = JSON.parse(readFileSync("npm-audit.json", "utf8"));
-              const counts = result.metadata?.vulnerabilities;
-              if (!counts) throw Error("Missing vulnerability metadata");
-              const order = ["critical", "high", "moderate", "low", "info"];
-              const summary = order.map(level => level + ": " + (counts[level] ?? 0)).join(", ");
-              appendFileSync(process.env.GITHUB_STEP_SUMMARY, "### npm advisory results\n\n" + summary + "\n");
-            } catch (error) {
-              appendFileSync(process.env.GITHUB_STEP_SUMMARY, "npm audit report could not be parsed: " + error.message + "\n");
-              process.exitCode = 1;
-            }
-          '
-      - name: Retain npm audit report
+        run: node scripts/summarize-npm-audits.mjs npm-audit.json npm-production-audit.json
+      - name: Retain both npm audit reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: eyezen-npm-audit
-          path: npm-audit.json
+          path: |
+            npm-audit.json
+            npm-production-audit.json
           if-no-files-found: warn
           retention-days: 14
 
