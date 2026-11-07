@@ -113,9 +113,8 @@ pub fn run() {
                                     // Ensure the control shows "off" after tray restoration,
                                     // without affecting an already-visible main window.
                                     if was_hidden {
-                                        let _ = window.eval(
-                                            "window.dispatchEvent(new Event('eyezen:comfort-off'))",
-                                        );
+                                        let _ = window
+                                            .eval("window.dispatchEvent(new Event('eyezen:comfort-off'))");
                                     }
                                 }
                             }
