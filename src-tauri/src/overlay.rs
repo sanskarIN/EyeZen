@@ -18,6 +18,24 @@ pub struct OverlayState(pub Mutex<ComfortSettings>);
 /// Emergency tray dismissal stays effective even if the main UI is frozen.
 pub struct EmergencyOff(pub AtomicBool);
 
+/// Close-to-tray must not reactivate overlays from queued or periodic
+/// frontend refreshes while the main window is hidden.
+#[derive(Default)]
+pub struct MainWindowHidden(pub AtomicBool);
+
+pub fn set_main_hidden(app: &AppHandle, hidden: bool) {
+    if let Some(flag) = app.try_state::<MainWindowHidden>() {
+        flag.0.store(hidden, Ordering::SeqCst);
+    }
+    if hidden {
+        close_overlays(app);
+    }
+}
+
+fn main_is_hidden(app: &AppHandle) -> bool {
+    app.state::<MainWindowHidden>().0.load(Ordering::SeqCst)
+}
+
 impl Default for EmergencyOff {
     fn default() -> Self {
         Self(AtomicBool::new(false))
@@ -142,6 +160,15 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
         });
     }
 
+    if main_is_hidden(&app) {
+        close_overlays(&app);
+        return Ok(OverlayResult {
+            status: "disabled",
+            message: "EyeZen is hidden in the tray; screen comfort remains off.".into(),
+            display_count: 0,
+        });
+    }
+
     if let Some(reason) = support_reason() {
         close_overlays(&app);
         return Ok(OverlayResult {
@@ -234,6 +261,11 @@ pub async fn apply(app: AppHandle, settings: ComfortSettings) -> Result<OverlayR
             window
                 .show()
                 .map_err(|e| format!("Cannot show display {index}: {e}"))?;
+            // A close request can arrive while a refresh is still in flight.
+            // Never let it resurrect tint windows after close-to-tray.
+            if main_is_hidden(&app) {
+                return Err("EyeZen was hidden during the overlay refresh.".into());
+            }
         }
         for (label, window) in app.webview_windows() {
             if is_stale_overlay(&label, monitors.len()) {
@@ -293,6 +325,16 @@ mod tests {
         assert!(is_stale_overlay("comfort-overlay-", 0));
         assert!(!is_stale_overlay("comfort-overlay-3", 4));
         assert!(is_stale_overlay("comfort-overlay-3", 3));
+    }
+
+    #[test]
+    fn main_window_starts_visible_and_hidden_guard_is_explicit() {
+        let state = MainWindowHidden::default();
+        assert!(!state.0.load(Ordering::SeqCst));
+        state.0.store(true, Ordering::SeqCst);
+        assert!(state.0.load(Ordering::SeqCst));
+        state.0.store(false, Ordering::SeqCst);
+        assert!(!state.0.load(Ordering::SeqCst));
     }
 
     #[test]

@@ -6,12 +6,23 @@ mod storage;
 
 use models::{ComfortSettings, EyeZenState, ScheduleRule};
 use platform::{OperationResult, PlatformReport};
-use std::sync::Mutex;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Mutex,
+};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
     Manager, State,
 };
+
+// Only hide the main UI when a working tray icon was actually installed.
+#[derive(Default)]
+struct TrayReady(AtomicBool);
+
+fn should_hide_to_tray(label: &str, tray_ready: bool) -> bool {
+    label == "main" && tray_ready
+}
 
 #[tauri::command]
 fn load_state(app: tauri::AppHandle) -> Result<EyeZenState, String> {
@@ -60,6 +71,8 @@ pub fn run() {
         .manage(Mutex::new(()))
         .manage(overlay::OverlayState::default())
         .manage(overlay::EmergencyOff::default())
+        .manage(overlay::MainWindowHidden::default())
+        .manage(TrayReady::default())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
@@ -80,9 +93,11 @@ pub fn run() {
                     .on_menu_event(|app, event| match event.id().as_ref() {
                         "open" => {
                             if let Some(window) = app.get_webview_window("main") {
-                                let _ = window.show();
-                                let _ = window.unminimize();
-                                let _ = window.set_focus();
+                                if window.show().is_ok() {
+                                    overlay::set_main_hidden(app, false);
+                                    let _ = window.unminimize();
+                                    let _ = window.set_focus();
+                                }
                             }
                         }
                         "comfort-off" => {
@@ -96,14 +111,34 @@ pub fn run() {
                         _ => {}
                     })
                     .build(app)?;
+                app.state::<TrayReady>().0.store(true, Ordering::SeqCst);
             }
             Ok(())
         })
         .on_window_event(|window, event| {
-            if window.label() == "main"
-                && matches!(event, tauri::WindowEvent::CloseRequested { .. })
-            {
-                overlay::disable(window.app_handle());
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() != "main" {
+                    return;
+                }
+                let app = window.app_handle();
+                let tray_ready = app.state::<TrayReady>().0.load(Ordering::SeqCst);
+                if should_hide_to_tray(window.label(), tray_ready) {
+                    // Block stale or recurring overlay refreshes *before*
+                    // hiding. Otherwise a hidden EyeZen could tint the desktop.
+                    overlay::set_main_hidden(app, true);
+                    if window.hide().is_ok() {
+                        api.prevent_close();
+                        if let Some(main) = app.get_webview_window("main") {
+                            let _ =
+                                main.eval("window.dispatchEvent(new Event('eyezen:comfort-off'))");
+                        }
+                        return;
+                    }
+                    // If hiding fails, let the window close normally instead
+                    // of trapping the user in a process without a visible UI.
+                    overlay::set_main_hidden(app, false);
+                }
+                overlay::disable(app);
             }
         })
         .invoke_handler(tauri::generate_handler![
@@ -116,4 +151,17 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("unable to start EyeZen");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_main_window_can_be_retained_by_a_ready_tray() {
+        assert!(should_hide_to_tray("main", true));
+        assert!(!should_hide_to_tray("main", false));
+        assert!(!should_hide_to_tray("comfort-overlay-0", true));
+        assert!(!should_hide_to_tray("other-window", true));
+    }
 }

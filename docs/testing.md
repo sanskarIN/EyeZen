@@ -42,6 +42,10 @@ RustSec findings are reported separately for `Cargo.lock`; unmaintained or unsou
 - Start a 30-second optional pause, immediately hide the browser tab or suspend the computer for longer than 30 seconds, then return; verify the pause has finished instead of resuming a stale countdown. Repeat with a short background interval and check the remaining time tracks actual elapsed seconds.
 - Verify break notifications with permissions accepted/denied and quiet hours.
 - Test shortcut conflicts on each OS, register/unregister, and tray lifecycle.
+- **Development close-to-tray gate (not yet part of v1.2.1 stable installers):** On Windows, macOS, and a Linux desktop with a usable tray icon, turn on desktop screen comfort, then close the main window with its title-bar close button. Verify the main window is hidden but the process/tray menu remains available and every visual tint overlay disappears immediately.
+- Leave EyeZen hidden for **at least 45 seconds** (longer than the 20-second display refresh interval), including a monitor unplug/replug where possible. Verify overlays never reappear or block input while hidden, and no tint lingers on any display.
+- Use the tray's **Open EyeZen** action: verify the same UI reopens, the comfort toggle is off, and an explicit new user enable can apply the overlay again. Separately verify **Disable screen comfort** still blocks automated reactivation until the user switches comfort off/on, and **Quit EyeZen** fully exits.
+- Where no tray icon can be created, verify closing behaves like an ordinary window close (without trapping EyeZen as an invisible background process). Check menu bar/dock differences, hotplug and sleep/wake on each relevant OS. Automated CI checks compilation and guard logic only; it cannot sign off physical tray or overlay behavior.
 - Inspect keyboard navigation and screen-reader announcements.
 - Test low contrast / scaled UI at 800×580 and larger.
 - Validate behavior with multiple real monitors, HDR and color-accurate apps.

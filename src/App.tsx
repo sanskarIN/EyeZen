@@ -750,6 +750,7 @@ export default function App() {
               <button className="secondary-btn" onClick={() => patch({ onboardingComplete: false })}>Show again</button></div>
             <div className="setting-line"><div><strong>Reset all preferences</strong><p className="muted">Restore built-in profiles and themes</p></div>
               <button className="danger-btn" onClick={() => { if (window.confirm("Reset all EyeZen preferences?")) setData({ ...createDefaults(), onboardingComplete: true }); }}>Reset</button></div>
+            {desktop && <div className="inline-note"><Info size={17}/> When a tray icon is available, closing this window hides EyeZen in the tray and switches off screen tint. Use “Open EyeZen” to reopen or “Quit EyeZen” to exit. Browser windows are unaffected.</div>}
           </Panel>
           <Panel title="Backup & shortcuts" description="Your configuration is under your control.">
             <div className="button-row"><button className="secondary-btn" onClick={() => exportJson(data, "eyezen-settings.json")}>
