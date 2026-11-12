@@ -120,4 +120,6 @@ Contributions, accessibility testing and device-specific reports are welcome; re
 
 **License:** [Mozilla Public License 2.0](LICENSE). Third-party packages retain their own licenses. Review dependency license obligations before distributing installer artifacts.
 
+Voluntary development support: [GitHub Sponsors](https://github.com/sponsors/sanskarIN). Donations are not required to use or contribute to EyeZen.
+
 Developed openly at [sanskarIN/EyeZen](https://github.com/sanskarIN/EyeZen).
