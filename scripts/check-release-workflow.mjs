@@ -27,6 +27,8 @@ export function checkReleaseWorkflow(source, version) {
     ["unsigned MSI/DMG/DEB/RPM manifest", "run: node scripts/verify-release-assets.mjs artifacts " + version, 1],
     ["downloaded package inventory", "- uses: actions/download-artifact@v4", 1],
     ["manual publisher", "- name: Publish GitHub release only when all bundles succeed", 1],
+    ["remote tag existence verification", "git ls-remote --tags --refs origin refs/tags/v" + version, 1],
+    ["pre-existing tag refusal", "Tag v" + version + " already exists; refusing to publish", 1],
   ];
   for (const [label, needle, quantity] of expected) {
     if (count(source, needle) !== quantity) {
