@@ -19,7 +19,7 @@ import { secondsUntil } from "./services/pause";
 import { wrappedTabTarget } from "./services/dialog-focus";
 import { Empty, Panel, Range, Status, Toggle } from "./components/ui";
 import { ProfileNameField } from "./components/ProfileNameField";
-import { activateProfile, removeProfile } from "./services/profiles";
+import { activateProfileRespectingStop, activateScheduledProfile, removeProfile } from "./services/profiles";
 
 const navigation = [
   { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
@@ -59,6 +59,8 @@ export default function App() {
   const [overlayStatus, setOverlayStatus] = useState<OverlayResult | null>(null);
   const overlayQueue = useRef<Promise<void>>(Promise.resolve());
   const comfortGestureSequence = useRef(0);
+  // Session-only emergency state: profiles and schedules cannot implicitly re-enable tint.
+  const comfortStopActive = useRef(false);
   const [screen, setScreen] = useState<Screen>("dashboard");
   const onboardingDialog = useRef<HTMLElement | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<string>("productivity");
@@ -109,6 +111,7 @@ export default function App() {
   useEffect(() => {
     if (!desktop) return;
     const onEmergencyOff = () => {
+      comfortStopActive.current = true;
       // Cancel any pending enable gesture before it races the tray emergency stop.
       comfortGestureSequence.current += 1;
       change(current => ({ ...current, comfort: { ...current.comfort, enabled: false } }));
@@ -126,7 +129,9 @@ export default function App() {
   function syncDesktopComfort(settings: EyeZenState["comfort"]) {
     overlayQueue.current = overlayQueue.current.catch(() => undefined).then(async () => {
       try {
-        setOverlayStatus(await applyComfortOverlay(settings));
+        // A queued refresh may contain old, enabled preferences from before a tray stop.
+        const effective = comfortStopActive.current ? { ...settings, enabled: false } : settings;
+        setOverlayStatus(await applyComfortOverlay(effective));
       } catch (error) {
         setOverlayStatus({ status: "unavailable", message: "Comfort overlay failed: " + String(error), displayCount: 0 });
       }
@@ -137,6 +142,11 @@ export default function App() {
     const id = window.setTimeout(() => syncDesktopComfort(data.comfort), data.comfort.enabled ? 160 : 0);
     return () => window.clearTimeout(id);
   }, [hasLoaded, data?.comfort.enabled, data?.comfort.warmth, data?.comfort.intensity]);
+
+  // Keep profile editor selection synchronized with an automated active-profile switch.
+  useEffect(() => {
+    if (data?.activeProfileId) setSelectedProfile(data.activeProfileId);
+  }, [data?.activeProfileId]);
 
   // Refresh screen geometry after display hotplug, resolution or DPI changes.
   useEffect(() => {
@@ -214,6 +224,7 @@ export default function App() {
       // Scheduled profiles and periodic refreshes must never clear the latch.
       await rearmEmergencyComfortStop();
       if (gesture !== comfortGestureSequence.current) return;
+      comfortStopActive.current = false;
       change(s => ({ ...s, comfort: { ...s.comfort, enabled: true } }));
     } catch (error) {
       if (gesture === comfortGestureSequence.current) {
@@ -222,7 +233,7 @@ export default function App() {
     }
   }
   function applyProfile(id: string, manual = true) {
-    change(s => activateProfile(s, id, manual));
+    change(s => activateProfileRespectingStop(s, id, manual, comfortStopActive.current));
     setSelectedProfile(id);
     setNotification("Profile applied. Unsupported display controls were not changed.");
   }
@@ -258,7 +269,8 @@ export default function App() {
       const capabilities = await platformReport();
       setReport(capabilities);
       if (!data) return;
-      const result = await applyComfortOverlay(data.comfort);
+      const effective = comfortStopActive.current ? { ...data.comfort, enabled: false } : data.comfort;
+      const result = await applyComfortOverlay(effective);
       setOverlayStatus(result);
       setNotification(result.message);
     } catch (error) { setNotification("Screen comfort check failed: " + String(error)); }
@@ -295,11 +307,14 @@ export default function App() {
   useEffect(() => {
     if (!data || data.manualOverride || !data.schedules.some(s => s.enabled)) return;
     let alive = true;
+    const schedulesAtLookup = data.schedules;
     const tick = async () => {
       try {
-        const id = await activeSchedule(data.schedules);
-        if (alive && id && id !== data.activeProfileId && data.profiles.some(p => p.id === id)) {
-          applyProfile(id, false);
+        const id = await activeSchedule(schedulesAtLookup);
+        if (alive && id) {
+          // Check the latest committed state inside React's functional updater.
+          // A delayed native result must not undo a newer manual choice or rule edit.
+          change(current => activateScheduledProfile(current, id, schedulesAtLookup, comfortStopActive.current));
         }
       } catch (error) { if (alive) setNotification("Schedule check failed: " + String(error)); }
     };
