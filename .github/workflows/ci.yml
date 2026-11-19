@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, release/v1.2.2-rc.1]
   workflow_dispatch:
     inputs:
       preview_installers:
@@ -33,6 +33,7 @@ jobs:
       - run: npm run check:versions
       - run: npm run check:release-workflow
       - run: npm run check:minimatch
+      - run: npm run check:rustix
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
