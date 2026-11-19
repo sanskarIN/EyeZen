@@ -11,6 +11,7 @@ on:
       - 'src-tauri/Cargo.toml'
       - 'src-tauri/Cargo.lock'
       - 'scripts/summarize-npm-audits*.mjs'
+      - 'scripts/check-minimatch-advisory*.mjs'
       - '.github/workflows/security-audit.yml'
   push:
     branches: [main]
@@ -20,6 +21,7 @@ on:
       - 'src-tauri/Cargo.toml'
       - 'src-tauri/Cargo.lock'
       - 'scripts/summarize-npm-audits*.mjs'
+      - 'scripts/check-minimatch-advisory*.mjs'
       - '.github/workflows/security-audit.yml'
   schedule:
     - cron: '17 3 * * 1'
@@ -45,6 +47,8 @@ jobs:
       - name: Validate locked npm dependency resolution
         id: install
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Reject known affected minimatch ranges
+        run: npm run check:minimatch
       - name: Audit all locked npm packages (fail on high/critical)
         run: npm audit --audit-level=high --json > npm-audit.json
       - name: Audit production-only packages (fail on high/critical)
