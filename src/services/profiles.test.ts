@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createDefaults } from "../defaults";
-import { activateProfile, removeProfile, validProfileName } from "./profiles";
+import { activateProfile, activateProfileRespectingStop, activateScheduledProfile, removeProfile, validProfileName } from "./profiles";
 
 describe("profile lifecycle", () => {
   it("applies profile settings without mutating the source", () => {
@@ -33,5 +33,71 @@ describe("profile lifecycle", () => {
     expect(validProfileName("My space")).toBe(true);
     expect(validProfileName("   ")).toBe(false);
     expect(validProfileName("🌙".repeat(21))).toBe(false);
+  });
+
+  it("rejects a delayed lookup after a user enables manual override", () => {
+    const initial = createDefaults();
+    const schedules = [{
+      id: "morning", profileId: "reading", weekdays: [0], start: "08:00",
+      end: "10:00", priority: 1, enabled: true
+    }];
+    const automatic = { ...initial, schedules };
+    const afterManualChoice = { ...automatic, manualOverride: true };
+    expect(activateScheduledProfile(afterManualChoice, "reading", schedules)).toBe(afterManualChoice);
+  });
+
+  it("ignores an old schedule result when rules were changed during lookup", () => {
+    const schedules = [{
+      id: "morning", profileId: "reading", weekdays: [0], start: "08:00",
+      end: "10:00", priority: 1, enabled: true
+    }];
+    const original = { ...createDefaults(), schedules };
+    const edited = { ...original, schedules: schedules.map(rule => ({ ...rule, enabled: false })) };
+    expect(activateScheduledProfile(edited, "reading", schedules)).toBe(edited);
+    // Even a lookup from the current rules cannot apply a now-disabled rule.
+    expect(activateScheduledProfile(edited, "reading", edited.schedules)).toBe(edited);
+  });
+
+  it("ignores unmatched or already-selected schedule results without rendering a change", () => {
+    const schedules = [{
+      id: "morning", profileId: "reading", weekdays: [0], start: "08:00",
+      end: "10:00", priority: 1, enabled: true
+    }];
+    const original = { ...createDefaults(), schedules };
+    expect(activateScheduledProfile(original, null, schedules)).toBe(original);
+    expect(activateScheduledProfile(original, "nonexistent", schedules)).toBe(original);
+    const active = { ...original, activeProfileId: "reading" };
+    expect(activateScheduledProfile(active, "reading", schedules)).toBe(active);
+  });
+
+  it("applies current automatic rules without enabling tint after a tray stop", () => {
+    const initial = createDefaults();
+    const schedules = [{
+      id: "evening", profileId: "reading", weekdays: [0], start: "18:00",
+      end: "23:00", priority: 1, enabled: true
+    }];
+    const state = { ...initial, schedules,
+      profiles: initial.profiles.map(profile => profile.id === "reading" ?
+        { ...profile, comfort: { ...profile.comfort, enabled: true } } : profile)
+    };
+    const result = activateScheduledProfile(state, "reading", schedules, true);
+    expect(result.activeProfileId).toBe("reading");
+    expect(result.manualOverride).toBe(false);
+    expect(result.comfort.enabled).toBe(false);
+    expect(result.profiles.find(profile => profile.id === "reading")?.comfort.enabled).toBe(true);
+    expect(activateScheduledProfile(state, "reading", schedules).comfort.enabled).toBe(true);
+  });
+
+  it("does not treat a manual profile selection as permission to rearm emergency tint", () => {
+    const initial = createDefaults();
+    const state = { ...initial, profiles: initial.profiles.map(profile => profile.id === "reading" ?
+      { ...profile, comfort: { ...profile.comfort, enabled: true } } : profile) };
+    const stopped = activateProfileRespectingStop(state, "reading", true, true);
+    expect(stopped.activeProfileId).toBe("reading");
+    expect(stopped.manualOverride).toBe(true);
+    expect(stopped.comfort.enabled).toBe(false);
+    expect(stopped.profiles.find(profile => profile.id === "reading")?.comfort.enabled).toBe(true);
+    expect(activateProfileRespectingStop(state, "reading", true, false).comfort.enabled).toBe(true);
+    expect(activateProfileRespectingStop(state, "missing", true, true)).toBe(state);
   });
 });
