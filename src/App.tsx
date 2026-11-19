@@ -19,7 +19,7 @@ import { secondsUntil } from "./services/pause";
 import { wrappedTabTarget } from "./services/dialog-focus";
 import { Empty, Panel, Range, Status, Toggle } from "./components/ui";
 import { ProfileNameField } from "./components/ProfileNameField";
-import { activateProfileRespectingStop, activateScheduledProfile, removeProfile } from "./services/profiles";
+import { activateProfileRespectingStop, activateScheduledProfile, removeProfile, respectComfortStop } from "./services/profiles";
 
 const navigation = [
   { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
@@ -459,8 +459,10 @@ export default function App() {
         setNotification("Profile imported and validated.");
       } else {
         if (!validateBackup(value)) throw Error("The backup does not match the supported settings schema.");
-        setData(value);
-        setSelectedProfile(value.activeProfileId);
+        // An import must not silently undo this session's explicit safety stop.
+        const imported = respectComfortStop(value, comfortStopActive.current);
+        setData(imported);
+        setSelectedProfile(imported.activeProfileId);
         setNotification("Settings backup imported.");
       }
     } catch (error) { setNotification("Import failed: " + String(error)); }
