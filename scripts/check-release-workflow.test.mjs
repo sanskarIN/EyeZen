@@ -35,6 +35,17 @@ describe("manual release publisher structural guard", () => {
     )).toThrow(/exact commit/);
   });
 
+  it("refuses publisher workflows without a complete remote tag-existence gate", () => {
+    const tagLookup = "git ls-remote --tags --refs origin refs/tags/v1.2.2";
+    expect(workflow).toContain(tagLookup);
+    expect(() => checkReleaseWorkflow(workflow.replace(tagLookup, "echo skip-tag-check"), "1.2.2"))
+      .toThrow(/remote tag existence/);
+    expect(() => checkReleaseWorkflow(
+      workflow.replace("Tag v1.2.2 already exists; refusing to publish", "Tag check skipped"),
+      "1.2.2"
+    )).toThrow(/pre-existing tag refusal/);
+  });
+
   it("rejects a release version mismatch and invalid inputs", () => {
     expect(() => checkReleaseWorkflow(workflow, "1.2.3")).toThrow();
     expect(() => checkReleaseWorkflow(workflow, "v1.2.2")).toThrow();
