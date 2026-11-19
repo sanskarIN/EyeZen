@@ -27,7 +27,7 @@ describe("manual release publisher structural guard", () => {
     expect(() => checkReleaseWorkflow(
       workflow.replace("  workflow_dispatch:", "  push:\n    branches: [main]\n  workflow_dispatch:"),
       "1.2.2"
-    )).toThrow(/manual-only/);
+    )).toThrow(/manual-only/i);
     expect(() => checkReleaseWorkflow(
       workflow.replace("run: node scripts/check-release-authorization.mjs",
         "run: echo bypassed-authorization"),
