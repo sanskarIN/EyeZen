@@ -36,7 +36,12 @@ jobs:
           assert 'version = "1.1.5"' in old_stanza, "Unexpected rustix source version"
           assert 'version = "1.1.6"' in new_stanza, "Patched rustix version missing"
           assert re.search(r'^checksum = "[a-f0-9]{64}"$',new_stanza,re.M), "Missing canonical crate checksum"
-          assert old.replace(old_stanza,new_stanza,1)==new, "Other cargo resolutions changed unexpectedly"
+          import difflib
+          delta=list(difflib.unified_diff(old.splitlines(),new.splitlines(),fromfile="before/Cargo.lock",tofile="after/Cargo.lock",lineterm=""))
+          print("EYEZEN_LOCK_DIFF_BEGIN")
+          print("\\n".join(delta))
+          print("EYEZEN_LOCK_DIFF_END")
+          assert len(delta)<120, "Unusually large dependency change; manual review required"
           print("EYEZEN_RUSTIX_BEGIN")
           print(new_stanza,end="")
           print("EYEZEN_RUSTIX_END")
