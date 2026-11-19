@@ -1,7 +1,7 @@
 # EyeZen v1.2.2 — release candidate checklist
 
 **Status:** Release candidate in preparation. **No v1.2.2 stable tag, published binary or release authorization yet.**  
-**Candidate PR:** To be linked after opening the PR. **Acceptance tracker:** [issue #50](https://github.com/sanskarIN/EyeZen/issues/50).  
+**Candidate PR:** [#51 — v1.2.2 release preparation](https://github.com/sanskarIN/EyeZen/pull/51). **Acceptance tracker:** [issue #50](https://github.com/sanskarIN/EyeZen/issues/50).  
 **Previous stable:** [v1.2.1](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.1) — previously recorded Windows 11 1920×1080 verification applies only to v1.2.1, not this candidate.
 
 ## Gate A — frozen source and version identity (automated)
