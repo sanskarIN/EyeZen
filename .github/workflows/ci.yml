@@ -46,10 +46,25 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - if: runner.os == 'Linux'
+      - name: Install Linux build libraries (retry signed APT index refresh)
+        if: runner.os == 'Linux'
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf
+          set -euo pipefail
+          # apt-get update may exit 0 after transient mirror failures, leaving
+          # stale indexes and provoking misleading 404s at install time.
+          # Error-Mode=any requires a complete signed-index refresh instead.
+          for attempt in 1 2 3; do
+            if sudo apt-get -o Acquire::Retries=3 -o APT::Update::Error-Mode=any update; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Ubuntu package indexes could not be refreshed after three attempts"
+              exit 1
+            fi
+            sleep $((attempt * 5))
+          done
+          sudo apt-get -o Acquire::Retries=3 install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

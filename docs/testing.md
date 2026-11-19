@@ -35,6 +35,14 @@ Both reports are retained together as the `eyezen-npm-audit` artifact, with sepa
 
 RustSec findings are reported separately for `Cargo.lock`; unmaintained or unsoundness warnings require target-specific assessment. Track the current transitive npm advisory in [issue #37](https://github.com/sanskarIN/EyeZen/issues/37) and RustSec warnings in [issue #29](https://github.com/sanskarIN/EyeZen/issues/29). Neither audit is a substitute for the real-device acceptance requirements below.
 
+## GitHub Actions Linux APT mirror failures
+
+The unsigned Linux desktop bundle requires distro-managed WebKitGTK, GTK, and system build packages. On 2026-11-19, [main CI run 44522274212](https://github.com/sanskarIN/EyeZen/actions/runs/44522274212) and [PR #48 CI run 44523875888](https://github.com/sanskarIN/EyeZen/actions/runs/44523875888) initially failed **before compiling source**: the hosted Ubuntu runner's package mirror timed out or returned HTTP 404 for packages referenced by stale indexes. This is a dependency-fetch failure, **not** evidence that Linux integration passed or failed.
+
+CI now requires a complete, authenticated APT index refresh (`APT::Update::Error-Mode=any`), retries transient downloads, and stops if the runner still cannot retrieve indexes. It does not disable signature checks, bypass missing packages, or change the supported Ubuntu target. A failing install is never treated as an optional or successful platform check.
+
+When this happens, inspect the Linux job's actual failed step, rerun failed jobs against the **same commit SHA**, and record that attempt's run ID/conclusion. Never override a required Linux check merely because Windows/macOS completed. The real-device Linux/Wayland/X11 checks remain manual.
+
 ## Additional manual tests required
 
 - Install and launch packaged artifacts on each OS.
