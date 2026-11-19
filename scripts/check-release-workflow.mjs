@@ -2,7 +2,7 @@ import console from "node:console";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
+import { URL, fileURLToPath } from "node:url";
 
 const count = (text, exact) => text.split(exact).length - 1;
 
@@ -33,7 +33,7 @@ export function checkReleaseWorkflow(source, version) {
       throw new Error(label + " expected " + quantity + " occurrence(s)");
     }
   }
-  if (!/^on:\r?\n  workflow_dispatch:/m.test(source) ||
+  if (!/^on:\r?\n[ ]{2}workflow_dispatch:/m.test(source) ||
       /^\s{2}(push|pull_request|schedule):/m.test(source) ||
       !source.includes("github.ref == 'refs/heads/main'") ||
       !source.includes("github.event.inputs.confirm_release == 'PUBLISH'") ||
