@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
+import { URL, fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { affectedMinimatchVersion, checkMinimatchLock, MINIMATCH_ADVISORY } from "./check-minimatch-advisory.mjs";
 
