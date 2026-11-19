@@ -20,6 +20,12 @@ export function validProfileName(name: string): boolean {
   return name.trim().length > 0 && new TextEncoder().encode(name).length <= 80;
 }
 
+/** Preserve an explicit OFF gesture even when a saved backup requests tint. */
+export function respectComfortStop(state: EyeZenState, stopped: boolean): EyeZenState {
+  if (!stopped || !state.comfort.enabled) return state;
+  return { ...state, comfort: { ...state.comfort, enabled: false } };
+}
+
 /**
  * A tray emergency stop disables tint independently of profile preferences.
  * Changing profiles is never an explicit request to rearm the safety latch.
@@ -31,8 +37,7 @@ export function activateProfileRespectingStop(
   comfortStopped = false
 ): EyeZenState {
   const next = activateProfile(state, id, manualOverride);
-  if (next === state || !comfortStopped || !next.comfort.enabled) return next;
-  return { ...next, comfort: { ...next.comfort, enabled: false } };
+  return next === state ? state : respectComfortStop(next, comfortStopped);
 }
 
 /**
