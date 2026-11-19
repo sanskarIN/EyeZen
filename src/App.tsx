@@ -10,7 +10,7 @@ import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import type { ComfortProfile, EyeZenState, OverlayResult, PlatformReport, ScheduleRule } from "./types";
 import { createDefaults, newBreaks, newComfort, themes } from "./defaults";
 import { APP_VERSION } from "./version";
-import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, rearmEmergencyComfortStop, requestDesktopNotificationPermission, requestWebNotificationPermission, saveState } from "./services/native";
+import { activeSchedule, applyComfortOverlay, desktop, loadState, notifyBreak, platformReport, rearmEmergencyComfortStop, requestDesktopNotificationPermission, requestWebNotificationPermission, saveState, stopScreenComfort } from "./services/native";
 import { exportJson, parseProfile, readJson, validateBackup } from "./services/imports";
 import { clearWebState, readRawWebState } from "./services/web-storage";
 import { validTime } from "./services/schedule";
@@ -61,6 +61,7 @@ export default function App() {
   const comfortGestureSequence = useRef(0);
   // Session-only emergency state: profiles and schedules cannot implicitly re-enable tint.
   const comfortStopActive = useRef(false);
+  const pendingComfortStop = useRef<Promise<void>>(Promise.resolve());
   const [screen, setScreen] = useState<Screen>("dashboard");
   const onboardingDialog = useRef<HTMLElement | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<string>("productivity");
@@ -217,10 +218,20 @@ export default function App() {
   async function setComfortEnabledByUser(enabled: boolean) {
     const gesture = ++comfortGestureSequence.current;
     if (!enabled) {
+      // Stop at native level immediately, before queued React overlay refreshes.
+      // Profile and schedule changes cannot override this explicit OFF action.
+      comfortStopActive.current = true;
       change(s => ({ ...s, comfort: { ...s.comfort, enabled: false } }));
+      pendingComfortStop.current = stopScreenComfort().catch(error => {
+        setNotification("Could not confirm native screen-comfort stop: " + String(error));
+      });
+      await pendingComfortStop.current;
       return;
     }
     try {
+      // An OFF followed rapidly by ON must not run native rearm before STOP.
+      await pendingComfortStop.current;
+      if (gesture !== comfortGestureSequence.current) return;
       // Scheduled profiles and periodic refreshes must never clear the latch.
       await rearmEmergencyComfortStop();
       if (gesture !== comfortGestureSequence.current) return;
