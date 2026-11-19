@@ -135,99 +135,14 @@ jobs:
       - name: Require exact release versions
         shell: bash
         run: |
-          test "$(node -p "require('./package.json').version")" = "1.2.2"
-          test "$(node -p "require('./package-lock.json').version")" = "1.2.2"
+          set -euo pipefail
           npm run check:versions
           npm run check:minimatch
+          test "$(node -p "require('./package.json').version")" = "1.2.2"
+          test "$(node -p "require('./package-lock.json').version")" = "1.2.2"
           test "$(node -p "require('./package-lock.json').packages[''].version")" = "1.2.2"
           test "$(node -p "require('./src-tauri/tauri.conf.json').version")" = "1.2.2"
-          grep -q '^version = "1.2.2"
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: eyezen-1.2.2-*-unsigned
-          path: artifacts
-          merge-multiple: false
-      - name: Validate complete installer set and generate portable SHA-256 manifest
-        run: node scripts/verify-release-assets.mjs artifacts 1.2.2
-      - name: Publish GitHub release only when all bundles succeed
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if gh release view v1.2.2 >/dev/null 2>&1; then
-            echo "Release already exists; refusing to replace published files."
-            exit 1
-          fi
-          mapfile -d '' installers < artifacts/release-assets.nul
-          if [ "${#installers[@]}" -ne 4 ]; then
-            echo "Release manifest did not contain exactly four installers."
-            exit 1
-          fi
-          gh release create v1.2.2 "${installers[@]}" artifacts/SHA256SUMS.txt \
-            --target "${GITHUB_SHA}" \
-            --title "EyeZen v1.2.2" \
-            --notes-file docs/release-notes-v1.2.2.md \
-            --latest
- src-tauri/Cargo.toml
-          # Locked Rust root identity must also agree with the installer version.
-          grep -A2 '^name = "eyezen"
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: eyezen-1.2.2-*-unsigned
-          path: artifacts
-          merge-multiple: false
-      - name: Validate complete installer set and generate portable SHA-256 manifest
-        run: node scripts/verify-release-assets.mjs artifacts 1.2.2
-      - name: Publish GitHub release only when all bundles succeed
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if gh release view v1.2.2 >/dev/null 2>&1; then
-            echo "Release already exists; refusing to replace published files."
-            exit 1
-          fi
-          mapfile -d '' installers < artifacts/release-assets.nul
-          if [ "${#installers[@]}" -ne 4 ]; then
-            echo "Release manifest did not contain exactly four installers."
-            exit 1
-          fi
-          gh release create v1.2.2 "${installers[@]}" artifacts/SHA256SUMS.txt \
-            --target "${GITHUB_SHA}" \
-            --title "EyeZen v1.2.2" \
-            --notes-file docs/release-notes-v1.2.2.md \
-            --latest
- src-tauri/Cargo.lock | grep -q '^version = "1.2.2"
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: eyezen-1.2.2-*-unsigned
-          path: artifacts
-          merge-multiple: false
-      - name: Validate complete installer set and generate portable SHA-256 manifest
-        run: node scripts/verify-release-assets.mjs artifacts 1.2.2
-      - name: Publish GitHub release only when all bundles succeed
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if gh release view v1.2.2 >/dev/null 2>&1; then
-            echo "Release already exists; refusing to replace published files."
-            exit 1
-          fi
-          mapfile -d '' installers < artifacts/release-assets.nul
-          if [ "${#installers[@]}" -ne 4 ]; then
-            echo "Release manifest did not contain exactly four installers."
-            exit 1
-          fi
-          gh release create v1.2.2 "${installers[@]}" artifacts/SHA256SUMS.txt \
-            --target "${GITHUB_SHA}" \
-            --title "EyeZen v1.2.2" \
-            --notes-file docs/release-notes-v1.2.2.md \
-            --latest
-
+          grep -q '^version = "1.2.2"$' src-tauri/Cargo.toml
       - uses: actions/download-artifact@v4
         with:
           pattern: eyezen-1.2.2-*-unsigned
