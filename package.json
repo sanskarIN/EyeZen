@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "check:versions": "node scripts/check-versions.mjs",
+    "check:release-workflow": "node scripts/check-release-workflow.mjs",
     "check:minimatch": "node scripts/check-minimatch-advisory.mjs",
     "test": "vitest run",
     "lint": "eslint .",
