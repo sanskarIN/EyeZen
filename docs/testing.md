@@ -38,6 +38,9 @@ RustSec findings are reported separately for `Cargo.lock`; unmaintained or unsou
 - Change a theme, quit, relaunch, verify persistence and active profile.
 - Create/edit/export/import/delete a profile; check malformed/oversized JSON rejected.
 - Test overlapping and overnight schedules with selected weekdays.
+- **Stale schedule response gate:** With a delayed schedule lookup in flight, manually select a different profile or enable Manual override before the response arrives. The earlier response must not change the active profile or turn Manual override back off. Repeat while editing/disabling the schedule; only results matching the current rule snapshot may apply.
+- **Tray emergency-stop profile gate (development only):** Create a profile whose saved comfort preference is enabled, then disable screen comfort from the tray. Switch to that profile manually and via an enabled schedule. The active profile may change but the on-screen comfort toggle must remain **off**, no tint should reappear, and the native emergency-stop latch must remain engaged until the explicit comfort enable toggle is clicked. Also confirm that an overlay sync already queued before the tray stop cannot reapply tint.
+
 - Test OS clock changes, daylight saving, suspend/resume and user manual overrides.
 - Start a 30-second optional pause, immediately hide the browser tab or suspend the computer for longer than 30 seconds, then return; verify the pause has finished instead of resuming a stale countdown. Repeat with a short background interval and check the remaining time tracks actual elapsed seconds.
 - Verify break notifications with permissions accepted/denied and quiet hours.

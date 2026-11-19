@@ -64,6 +64,13 @@ fn rearm_emergency_comfort_stop(app: tauri::AppHandle) -> Result<(), String> {
     overlay::rearm_emergency_stop(&app)
 }
 
+// An explicit UI OFF gesture must close overlays immediately, not wait for a
+// throttled React effect or a queued geometry refresh.
+#[tauri::command]
+fn stop_screen_comfort(app: tauri::AppHandle) {
+    overlay::emergency_stop(&app);
+}
+
 #[tauri::command]
 fn request_display_adjustment() -> OperationResult {
     platform::apply_display_settings()
@@ -168,6 +175,7 @@ pub fn run() {
             request_display_adjustment,
             matching_schedule,
             apply_comfort_overlay,
+            stop_screen_comfort,
             rearm_emergency_comfort_stop
         ])
         .run(tauri::generate_context!())

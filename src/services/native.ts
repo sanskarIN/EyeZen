@@ -27,6 +27,11 @@ export async function applyComfortOverlay(settings: ComfortSettings): Promise<Ov
   if (desktop) return invoke<OverlayResult>("apply_comfort_overlay", { settings });
   return { status: "unsupported", message: "Browser previews cannot alter other desktop windows.", displayCount: 0 };
 }
+/** A user's explicit OFF gesture must latch the native stop immediately. */
+export async function stopScreenComfort(): Promise<void> {
+  if (desktop) await invoke("stop_screen_comfort");
+}
+
 /** Only an explicit screen-comfort enable gesture should call this. */
 export async function rearmEmergencyComfortStop(): Promise<void> {
   if (desktop) await invoke("rearm_emergency_comfort_stop");

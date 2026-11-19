@@ -11,7 +11,7 @@ vi.mock("@tauri-apps/plugin-notification", () => ({
   sendNotification: vi.fn(),
 }));
 
-import { applyComfortOverlay, rearmEmergencyComfortStop } from "./native";
+import { applyComfortOverlay, rearmEmergencyComfortStop, stopScreenComfort } from "./native";
 
 describe("emergency overlay latch requests", () => {
   beforeEach(() => {
@@ -31,6 +31,18 @@ describe("emergency overlay latch requests", () => {
     await applyComfortOverlay({ enabled: true, warmth: 45, intensity: 30 });
     expect(native.invoke).toHaveBeenCalledTimes(1);
     expect(native.invoke).not.toHaveBeenCalledWith("rearm_emergency_comfort_stop");
+  });
+
+
+  it("explicit user OFF uses native stop and never rearms automatically", async () => {
+    await stopScreenComfort();
+    expect(native.invoke).toHaveBeenCalledExactlyOnceWith("stop_screen_comfort");
+    expect(native.invoke).not.toHaveBeenCalledWith("rearm_emergency_comfort_stop");
+  });
+
+  it("reports native stop failures for user-visible handling", async () => {
+    native.invoke.mockRejectedValueOnce(new Error("Stop command unavailable"));
+    await expect(stopScreenComfort()).rejects.toThrow("Stop command unavailable");
   });
 
   it("only the explicit rearm API invokes the native latch reset", async () => {
