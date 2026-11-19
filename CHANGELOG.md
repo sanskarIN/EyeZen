@@ -2,6 +2,25 @@
 
 All notable release changes will be documented here.
 
+## [Unreleased — v1.2.2 candidate] — safety and security maintenance
+
+**Status:** Candidate only; v1.2.2 is not yet published or manually accepted. Real-device acceptance, installer checks and native dependency warning review remain tracked in [release gate #50](https://github.com/sanskarIN/EyeZen/issues/50).
+
+### Fixed
+- Preserve visible click-through and fail-closed overlay behavior after display/session refreshes (#33)
+- Close to tray without leaving tint behind, and prevent hidden scheduled profiles, stale redraws or tray reopening from clearing the emergency-stop latch (#41–#43)
+- Prevent delayed schedule results, manual profile switches, imported backup settings and rapid comfort toggles from bypassing explicit screen-comfort OFF (#47)
+
+### Security and distribution
+- Resolve the affected nested `minimatch` build-tooling copy via TypeScript-ESLint 8.73.0, locked `minimatch 11.0.9` and tested version-range checks (#48)
+- Separate full and production-only npm advisory reports, including affected package evidence (#39–#40)
+- Keep candidate installer filename/version verification and opt-in source-SHA-identified development packages (#32, #36, #44)
+- Fail closed on partial signed Ubuntu APT index refreshes, with bounded network retries for CI (#49)
+- Prepare version-synchronized v1.2.2 manifests, unsigned preview installer validation, conservative release notes and a SHA-locked, explicitly authorized manual stable publisher
+
+**Unresolved:** New candidate CI and physical-device tests must run; Linux Wayland overlays remain unsupported, native signing is not implemented, and RustSec informational warning review (#29) remains open. This entry is **not** a stable release announcement.
+
+
 ## [1.2.1] — 2026-10-25 — reliability and integrity maintenance
 
 **Release disclosure:** Cross-platform build/test/checksum and dependency vulnerability audits passed. Real-device overlay, installer and screen-reader acceptance remain unverified; five informational RustSec warnings are tracked in issue #29. Packages are unsigned.
