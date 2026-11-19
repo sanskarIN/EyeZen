@@ -9,7 +9,7 @@ const { version } = JSON.parse(readFileSync(new URL("package.json", root), "utf8
 describe("published documentation integrity", () => {
   it("labels candidate documentation without advertising unreleased builds as stable", () => {
     expect(docs).toContain(`v${version} documentation`);
-    const published = /Latest stable: v(\\d+\\.\\d+\\.\\d+)/.exec(docs)?.[1];
+    const published = /Latest stable: v(\d+\.\d+\.\d+)/.exec(docs)?.[1];
     expect(published).toBeDefined();
     const fields = (value) => value.split(".").map(Number);
     const [major, minor, patch] = fields(published ?? "0.0.0");
