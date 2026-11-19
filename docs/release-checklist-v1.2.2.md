@@ -8,7 +8,7 @@
 
 - [ ] Check final candidate's full 40-character Git SHA and ensure no changes after verification.
 - [ ] Exact v1.2.2 in `package.json`, `package-lock.json` (root and package root), `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, `src-tauri/tauri.conf.json`; run `npm run check:versions`.
-- [ ] `npm ci --no-audit --no-fund`, `npm run check:minimatch`, ESLint, TypeScript, Vitest and Vite production build succeed for this SHA.
+- [ ] `npm ci --no-audit --no-fund`, `npm run check:minimatch`, `npm run check:rustix`, ESLint, TypeScript, Vitest and Vite production build succeed for this SHA.
 - [ ] `cargo fmt --all -- --check`, `cargo clippy --locked --all-targets -- -D warnings` and `cargo test --locked` succeed on Windows, macOS and Ubuntu 24.04.
 - [ ] Confirm release PR branch/version verifier matches `release/v1.2.2-rc.1`, and candidate release inventory runs only when all three platform builds succeeded.
 
