@@ -10,18 +10,19 @@ export const MINIMATCH_ADVISORY = "GHSA-g3hv-75wg-m249";
 
 function parseReleaseVersion(value) {
   if (typeof value !== "string") return null;
-  const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/.exec(value);
+  const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/.exec(value);
   if (!match) return null;
   const release = match.slice(1, 4).map(Number);
   if (release.some(part => !Number.isSafeInteger(part))) return null;
-  return release;
+  return { release, prerelease: Boolean(match[4]) };
 }
 
 export function affectedMinimatchVersion(version) {
   const v = parseReleaseVersion(version);
   if (!v) throw new Error("Cannot assess malformed minimatch version: " + String(version));
-  const [major, minor, patch] = v;
-  return (major >= 7 && major < 11) || (major === 11 && minor === 0 && patch < 1);
+  const [major, minor, patch] = v.release;
+  return (major >= 7 && major < 11) ||
+    (major === 11 && minor === 0 && (patch < 1 || (patch === 1 && v.prerelease)));
 }
 
 export function checkMinimatchLock(lock) {
