@@ -4,7 +4,7 @@ name: Audit EyeZen dependencies
 # A failed audit is actionable evidence, not approval to publish a release.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, release/v1.2.2-rc.1]
     paths:
       - 'package.json'
       - 'package-lock.json'
