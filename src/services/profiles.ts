@@ -19,3 +19,34 @@ export function removeProfile(state: EyeZenState, id: string): EyeZenState {
 export function validProfileName(name: string): boolean {
   return name.trim().length > 0 && new TextEncoder().encode(name).length <= 80;
 }
+
+/**
+ * A tray emergency stop disables tint independently of profile preferences.
+ * Changing profiles is never an explicit request to rearm the safety latch.
+ */
+export function activateProfileRespectingStop(
+  state: EyeZenState,
+  id: string,
+  manualOverride = true,
+  comfortStopped = false
+): EyeZenState {
+  const next = activateProfile(state, id, manualOverride);
+  if (next === state || !comfortStopped || !next.comfort.enabled) return next;
+  return { ...next, comfort: { ...next.comfort, enabled: false } };
+}
+
+/**
+ * Native schedule lookup is asynchronous: ignore stale results after a manual
+ * override or schedule edit, even before the old React effect cleans up.
+ */
+export function activateScheduledProfile(
+  state: EyeZenState,
+  profileId: string | null,
+  schedulesAtLookup: EyeZenState["schedules"],
+  comfortStopped = false
+): EyeZenState {
+  if (!profileId || state.manualOverride || state.schedules !== schedulesAtLookup ||
+    state.activeProfileId === profileId ||
+    !state.schedules.some(rule => rule.enabled && rule.profileId === profileId)) return state;
+  return activateProfileRespectingStop(state, profileId, false, comfortStopped);
+}
