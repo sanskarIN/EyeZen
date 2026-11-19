@@ -31,6 +31,7 @@ jobs:
           node-version: "22"
       - run: npm ci --no-audit --no-fund
       - run: npm run check:versions
+      - run: npm run check:minimatch
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
