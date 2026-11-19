@@ -34,21 +34,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Require exact commit and explicit acceptance review
-        shell: bash
+      - name: Verify explicit publication authorization against exact main SHA
         env:
           CONFIRM_SHA: ${{ inputs.confirm_source_sha }}
-          ACCEPTANCE: ${{ inputs.confirm_acceptance }}
-        run: |
-          set -euo pipefail
-          if [[ ! "$CONFIRM_SHA" =~ ^[0-9a-f]{40}$ ]] || [[ "$CONFIRM_SHA" != "$GITHUB_SHA" ]]; then
-            echo "::error::The reviewed full source SHA must match this main-branch workflow run exactly."
-            exit 1
-          fi
-          if [[ "$ACCEPTANCE" != "REVIEWED" ]]; then
-            echo "::error::Review the v1.2.2 quality gates and residual risks before publishing."
-            exit 1
-          fi
+          CONFIRM_ACCEPTANCE: ${{ inputs.confirm_acceptance }}
+          CONFIRM_RELEASE: ${{ inputs.confirm_release }}
+          RELEASE_VERSION: '1.2.2'
+        run: node scripts/check-release-authorization.mjs
       - run: npm ci --no-audit --no-fund
       - run: npm run check:versions
       - run: npm run check:minimatch
@@ -133,6 +125,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Revalidate publication authorization before writing release assets
+        env:
+          CONFIRM_SHA: ${{ inputs.confirm_source_sha }}
+          CONFIRM_ACCEPTANCE: ${{ inputs.confirm_acceptance }}
+          CONFIRM_RELEASE: ${{ inputs.confirm_release }}
+          RELEASE_VERSION: '1.2.2'
+        run: node scripts/check-release-authorization.mjs
       - name: Require exact release versions
         shell: bash
         run: |
