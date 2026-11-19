@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createDefaults } from "../defaults";
-import { activateProfile, activateProfileRespectingStop, activateScheduledProfile, removeProfile, validProfileName } from "./profiles";
+import { activateProfile, activateProfileRespectingStop, activateScheduledProfile, removeProfile, respectComfortStop, validProfileName } from "./profiles";
 
 describe("profile lifecycle", () => {
   it("applies profile settings without mutating the source", () => {
@@ -99,5 +99,16 @@ describe("profile lifecycle", () => {
     expect(stopped.profiles.find(profile => profile.id === "reading")?.comfort.enabled).toBe(true);
     expect(activateProfileRespectingStop(state, "reading", true, false).comfort.enabled).toBe(true);
     expect(activateProfileRespectingStop(state, "missing", true, true)).toBe(state);
+  });
+
+  it("keeps an imported backup from bypassing an active comfort stop", () => {
+    const original = createDefaults();
+    original.comfort.enabled = true;
+    const stopped = respectComfortStop(original, true);
+    expect(stopped).not.toBe(original);
+    expect(stopped.comfort.enabled).toBe(false);
+    expect(original.comfort.enabled).toBe(true);
+    expect(respectComfortStop(original, false)).toBe(original);
+    expect(respectComfortStop(stopped, true)).toBe(stopped);
   });
 });
