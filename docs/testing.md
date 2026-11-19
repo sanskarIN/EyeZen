@@ -5,6 +5,7 @@ Run these checks before proposing any new stable version, including v1.2.1:
 ~~~sh
 npm ci
 npm run icons
+npm run check:minimatch
 npm run lint
 npm run typecheck
 npm run test
@@ -22,6 +23,8 @@ Rust: default state validation, active profile references, invalid break interva
 TypeScript/Vitest: overnight matching, conflict tie-breaking, quiet-hours and invalid clock syntax.
 
 ## Dependency advisory checks
+
+The known moderate `minimatch` development-tooling range is guarded by `npm run check:minimatch` (including malformed locked package versions). See [November 2026 scoped remediation](security-minimatch-remediation-2026-11.md). This static check is **not** a substitute for live `npm audit` or a claim that the code path is reachable in EyeZen.
 
 The separate [security-audit workflow](../.github/workflows/security-audit.yml) runs on relevant dependency changes, a weekly schedule, or manual dispatch. Its npm job runs two independent checks of the **locked** dependency graph:
 
