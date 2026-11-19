@@ -1,8 +1,8 @@
 # EyeZen v1.2.2 — Safety and security maintenance
 
-EyeZen v1.2.2 is a patch release candidate for the local-first desktop application and browser edition. It focuses on preventing accidental screen-tint reactivation, safer tray behavior, predictable scheduled profiles, improved build infrastructure, and a targeted dependency advisory fix. It does **not** add hardware brightness/color-temperature controls or expand Linux Wayland support.
+EyeZen v1.2.2 is a patch maintenance release for the local-first desktop application and browser edition. It focuses on preventing accidental screen-tint reactivation, safer tray behavior, predictable scheduled profiles, improved build infrastructure, and a targeted dependency advisory fix. It does **not** add hardware brightness/color-temperature controls or expand Linux Wayland support.
 
-**Candidate status:** As of 2026-11-19, v1.2.2 is being prepared; no stable v1.2.2 packages have been published. The previously published release is [v1.2.1](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.1). Candidate tests, installer checks and device acceptance must be recorded in [v1.2.2 release gate #50](https://github.com/sanskarIN/EyeZen/issues/50). Do not interpret a successful CI build as proof that physical monitor behavior, keyboard input passthrough or actual installation succeeded.
+**Important disclosures:** Installer builds are unsigned. Passing automated builds, tests and SHA-256 verification does not independently demonstrate physical monitor click-through, installation success, OS accessibility or publisher signing. Real-device acceptance and any explicitly accepted residual risks are tracked in [v1.2.2 release gate #50](https://github.com/sanskarIN/EyeZen/issues/50). The [previous stable v1.2.1](https://github.com/sanskarIN/EyeZen/releases/tag/v1.2.1) hardware report cannot establish new v1.2.2 behavior.
 
 ## Changes since v1.2.1
 
@@ -27,9 +27,11 @@ EyeZen v1.2.2 is a patch release candidate for the local-first desktop applicati
 - User settings retain **schema version 1**, so no account, network sync or data migration is introduced. The browser edition remains local-only and cannot tint other application windows.
 - The optional desktop effect is a transparent click-through **visual overlay**, not real hardware brightness, ICC calibration, operating-system Night Light/Night Shift, or guaranteed behavior in exclusive fullscreen.
 - Linux X11 overlays are experimental and Wayland desktop-wide overlays are unsupported.
-- Candidate Windows MSI, macOS DMG, Linux DEB and RPM packages are **unsigned** unless a future release explicitly proves otherwise. Actual installation, multi-monitor/mixed-DPI click-through, tray lifecycle, hotplug, sleep/wake and assistive-technology behavior require independent evidence.
+- Windows MSI, macOS DMG, Linux DEB and RPM packages are **unsigned** unless a later release explicitly proves otherwise. Actual installation, multi-monitor/mixed-DPI click-through, tray lifecycle, hotplug, sleep/wake and assistive-technology behavior require independent evidence.
 - Current RustSec informational warnings (including transitive GTK/glib unsoundness and unmaintained packages) remain tracked in [issue #29](https://github.com/sanskarIN/EyeZen/issues/29); the maintainer must assess their relevance and document a risk decision. No claim of a vulnerability-free operating-system runtime is made.
 
-## Release verification status
+## Verification and supporting evidence
 
-As of initial candidate preparation, **the versioned v1.2.2 candidate and its four installer payloads still require full CI, package checksum review, hardware acceptance and release authorization**. See [release checklist](release-checklist-v1.2.2.md) and [acceptance issue #50](https://github.com/sanskarIN/EyeZen/issues/50). The manual, SHA-locked publication workflow must not be dispatched before those gates are reviewed. The prior v1.2.1 manual report does not validate new v1.2.2 desktop safety changes.
+The manually gated v1.2.2 publishing workflow checks source-version parity, frontend and native tests, four expected unsigned installer types (MSI, DMG, DEB and RPM) and a portable SHA-256 manifest before publishing. It requires explicit release and acceptance confirmations tied to the reviewed **full source commit SHA**. Inspect the actual release workflow run, installer hashes and the separate [release acceptance tracker #50](https://github.com/sanskarIN/EyeZen/issues/50) for the recorded outcomes, exceptions and unresolved physical-device tests. SHA-256 checksums establish consistency with published files, not code signing or guaranteed safe operation.
+
+This document is used as **GitHub Release notes only after the maintainer explicitly authorizes publication**. Release candidate progress and pre-publication checklists remain in [the v1.2.2 candidate PR](https://github.com/sanskarIN/EyeZen/pull/51) and [release checklist](https://github.com/sanskarIN/EyeZen/blob/main/docs/release-checklist-v1.2.2.md).
