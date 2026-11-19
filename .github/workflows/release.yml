@@ -157,8 +157,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # A tag can predate its GitHub Release. Refuse either situation:
+          # --target is not a safe substitute for checking an existing tag.
+          # ls-remote must succeed; a network/auth error is NOT an absent tag.
+          existing_tag="$(git ls-remote --tags --refs origin refs/tags/v1.2.2)"
+          if [ -n "$existing_tag" ]; then
+            echo "::error::Tag v1.2.2 already exists; refusing to publish from an unverified tag."
+            exit 1
+          fi
           if gh release view v1.2.2 >/dev/null 2>&1; then
-            echo "Release already exists; refusing to replace published files."
+            echo "::error::Release v1.2.2 already exists; refusing to replace published files."
             exit 1
           fi
           mapfile -d '' installers < artifacts/release-assets.nul
