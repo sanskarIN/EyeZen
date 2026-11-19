@@ -43,6 +43,7 @@ jobs:
         run: node scripts/check-release-authorization.mjs
       - run: npm ci --no-audit --no-fund
       - run: npm run check:versions
+      - run: npm run check:release-workflow
       - run: npm run check:minimatch
       - run: npm run lint
       - run: npm run typecheck
