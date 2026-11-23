@@ -15,7 +15,7 @@ const lock = version => [
   'source = "registry+https://github.com/rust-lang/crates.io-index"', "",
 ].join("\n");
 
-describe("url unsoundness advisory lockfile guard", () => {
+describe("url stack-overflow advisory lockfile guard", () => {
   it("accepts the exact patched 2.5.9 boundary and newer versions", () => {
     for (const version of ["2.5.9", "2.5.10", "2.6.0", "3.0.0"]) {
       expect(isAffectedUrlVersion(version), version).toBe(false);
