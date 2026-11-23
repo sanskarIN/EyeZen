@@ -10,6 +10,7 @@
     "check:versions": "node scripts/check-versions.mjs",
     "check:release-workflow": "node scripts/check-release-workflow.mjs",
     "check:minimatch": "node scripts/check-minimatch-advisory.mjs",
+    "check:rustix": "node scripts/check-rustix-advisory.mjs",
     "test": "vitest run",
     "lint": "eslint .",
     "tauri": "npm run icons && tauri",
