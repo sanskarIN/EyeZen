@@ -1,0 +1,46 @@
+# TEMPORARY security review workflow. Remove after Cargo.lock is committed.
+# Never use this to publish a release.
+name: Generate patched URL lockfile (temporary review)
+
+on:
+  push:
+    branches: [security/patch-url-2.5.9-v122]
+    paths: ['.github/workflows/generate-url-lock-review.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  cargo-lock:
+    if: github.repository == 'sanskarIN/EyeZen' && github.ref == 'refs/heads/security/patch-url-2.5.9-v122'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Generate lockfile with official Cargo
+        run: |
+          set -euo pipefail
+          cargo update --manifest-path src-tauri/Cargo.toml -p url --precise 2.5.9
+          cargo metadata --manifest-path src-tauri/Cargo.toml --format-version 1 --no-deps --locked > /dev/null
+          python3 - <<'PY'
+          import tomllib
+          with open('src-tauri/Cargo.lock', 'rb') as f:
+              packages = tomllib.load(f)['package']
+          versions = [p['version'] for p in packages if p['name'] == 'url']
+          assert versions == ['2.5.9'], f'Unexpected locked url versions: {versions}'
+          print('Validated locked url 2.5.9')
+          PY
+          git diff -- src-tauri/Cargo.lock
+          test -z "$(git diff -- src-tauri/Cargo.toml)"
+      - name: Commit the Cargo-generated lockfile
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- src-tauri/Cargo.lock; then
+            echo "::error::Lockfile did not change; expected url advisory remediation"
+            exit 1
+          fi
+          git add src-tauri/Cargo.lock
+          git -c user.name='Sanskar' -c user.email='sanskarin@outlook.in' commit -m 'security(cargo): patch locked url to 2.5.9'
+          git push origin HEAD:refs/heads/security/patch-url-2.5.9-v122
