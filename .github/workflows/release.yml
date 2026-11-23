@@ -46,6 +46,7 @@ jobs:
       - run: npm run check:release-workflow
       - run: npm run check:minimatch
       - run: npm run check:rustix
+      - run: npm run check:url
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
