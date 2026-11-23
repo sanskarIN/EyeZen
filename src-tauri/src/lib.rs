@@ -25,10 +25,7 @@ fn should_hide_to_tray(label: &str, tray_ready: bool) -> bool {
 }
 
 #[tauri::command]
-fn load_state(
-    app: tauri::AppHandle,
-    guard: State<'_, Mutex<()>>,
-) -> Result<EyeZenState, String> {
+fn load_state(app: tauri::AppHandle, guard: State<'_, Mutex<()>>) -> Result<EyeZenState, String> {
     let path = storage::state_path(&app)?;
     // Reads can recover/replace settings. Use the same lock as writes so a
     // concurrent Windows rename is not mistaken for an interrupted save.
