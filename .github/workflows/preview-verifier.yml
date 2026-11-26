@@ -1,0 +1,27 @@
+name: Test independent preview verifier
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/verify_preview.py'
+      - 'scripts/test_verify_preview.py'
+      - '.github/workflows/preview-verifier.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/verify_preview.py'
+      - 'scripts/test_verify_preview.py'
+      - '.github/workflows/preview-verifier.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run standard-library regression tests
+        run: python3 -m unittest discover -s scripts -p test_verify_preview.py -v
