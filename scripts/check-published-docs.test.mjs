@@ -7,9 +7,20 @@ const docs = readFileSync(new URL("public/docs/index.html", root), "utf8");
 const { version } = JSON.parse(readFileSync(new URL("package.json", root), "utf8"));
 
 describe("published documentation integrity", () => {
-  it("identifies the same stable version as the application manifest", () => {
+  it("labels candidate documentation without advertising unreleased builds as stable", () => {
     expect(docs).toContain(`v${version} documentation`);
-    expect(docs).toContain(`Latest stable: v${version}`);
+    const published = /Latest stable: v(\d+\.\d+\.\d+)/.exec(docs)?.[1];
+    expect(published).toBeDefined();
+    const fields = (value) => value.split(".").map(Number);
+    const [major, minor, patch] = fields(published ?? "0.0.0");
+    const [nextMajor, nextMinor, nextPatch] = fields(version);
+    expect([major, minor, patch].every(Number.isInteger)).toBe(true);
+    const comparison = major - nextMajor || minor - nextMinor || patch - nextPatch;
+    expect(comparison).toBeLessThanOrEqual(0);
+    if (published !== version) {
+      expect(docs).toContain(`v${version} release candidate`);
+      expect(docs).toContain("not yet published as stable");
+    }
   });
 
   it("resolves every same-page navigation link to an existing element", () => {

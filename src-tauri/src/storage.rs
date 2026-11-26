@@ -3,10 +3,24 @@ use std::{
     fs,
     io::Write,
     path::{Path, PathBuf},
+    sync::Mutex,
 };
 use tauri::Manager;
 
 const MAX_SETTINGS_BYTES: usize = 128_000;
+
+/// Serialize all settings access that may touch the primary or recovery files.
+/// Both saving and loading/recovering must use this lock: on Windows, a save
+/// temporarily renames the primary to .previous before replacing it.
+pub fn serialized<T>(
+    guard: &Mutex<()>,
+    operation: impl FnOnce() -> Result<T, String>,
+) -> Result<T, String> {
+    let _lock = guard
+        .lock()
+        .map_err(|_| "Settings access lock is unavailable")?;
+    operation()
+}
 
 pub fn state_path<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<PathBuf, String> {
     app.path()
@@ -220,6 +234,49 @@ mod tests {
             })
             .expect("corrupt original retained");
         assert_eq!(fs::read_to_string(corrupt).unwrap(), "{corrupt primary");
+    }
+
+    #[test]
+    fn serialized_recovery_waits_for_an_inflight_windows_style_replace() {
+        use std::sync::{mpsc, Arc};
+        use std::time::Duration;
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let original = EyeZenState::default();
+        save(&path, &original).unwrap();
+        let updated = EyeZenState {
+            theme: "sepia".into(),
+            ..original
+        };
+        let guard = Arc::new(Mutex::new(()));
+        let (attempt_tx, attempt_rx) = mpsc::channel();
+        let (result_tx, result_rx) = mpsc::channel();
+
+        std::thread::scope(|scope| {
+            // Simulate the moment when a Windows save has moved settings.json
+            // aside but has not yet installed its replacement.
+            let write_lock = guard.lock().unwrap();
+            fs::rename(&path, path.with_extension("json.previous")).unwrap();
+            let read_guard = Arc::clone(&guard);
+            let read_path = path.clone();
+            let reader = scope.spawn(move || {
+                attempt_tx.send(()).unwrap();
+                let result = serialized(&read_guard, || recover(&read_path));
+                result_tx.send(result).unwrap();
+            });
+            attempt_rx.recv().unwrap();
+            assert!(matches!(
+                result_rx.recv_timeout(Duration::from_millis(75)),
+                Err(mpsc::RecvTimeoutError::Timeout)
+            ));
+            fs::write(&path, serde_json::to_vec(&updated).unwrap()).unwrap();
+            drop(write_lock);
+            reader.join().unwrap();
+        });
+
+        assert_eq!(result_rx.recv().unwrap().unwrap(), updated);
+        assert_eq!(load(&path).unwrap(), updated);
     }
 
     #[test]

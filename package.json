@@ -1,14 +1,17 @@
 {
   "name": "eyezen",
   "private": true,
-  "version": "1.2.1",
+  "version": "1.2.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "check:versions": "node scripts/check-versions.mjs",
+    "check:release-workflow": "node scripts/check-release-workflow.mjs",
     "check:minimatch": "node scripts/check-minimatch-advisory.mjs",
+    "check:rustix": "node scripts/check-rustix-advisory.mjs",
+    "check:url": "node scripts/check-url-advisory.mjs",
     "test": "vitest run",
     "lint": "eslint .",
     "tauri": "npm run icons && tauri",
